@@ -9,11 +9,11 @@ interface CommonSEOProps {
   description: string
   ogType: string
   ogImage:
-  | string
-  | {
-    '@type': string
-    url: string
-  }[]
+    | string
+    | {
+        '@type': string
+        url: string
+      }[]
   twImage: string
   canonicalUrl?: string
 }
@@ -40,8 +40,8 @@ const CommonSEO = ({
       {Array.isArray(ogImage) ? (
         ogImage.map(({ url }) => <meta property="og:image" content={url} key={url} />)
       ) : (
-          <meta property="og:image" content={ogImage} key={ogImage} />
-        )}
+        <meta property="og:image" content={ogImage} key={ogImage} />
+      )}
       <meta name="twitter:card" content="summary_large_image" />
       <meta name="twitter:site" content={siteMetadata.twitter} />
       <meta name="twitter:title" content={title} />
@@ -120,8 +120,8 @@ export const BlogSEO = ({
     images.length === 0
       ? [siteMetadata.socialBanner]
       : typeof images === 'string'
-        ? [images]
-        : images
+      ? [images]
+      : images
 
   const featuredImages = imagesArr.map((img) => {
     return {
