@@ -5,3 +5,28 @@ tags: ['rust']
 draft: false
 summary: 'Learning the Rust and put some notes here for furture reference'
 ---
+
+## 1. variables
+```rust
+let number: f32 = 10;
+```
+
+- number is the variable name, f32 is type, 10 is value.
+- All variable default is immutable, for safty, concurrency and speed.
+- Use let `mut` number: f32 = 10; to change number to a mutable value that can be changed later. 
+
+## 2. function
+```rust
+fun do_stuff(a: f32, b: f32) -> f32 {
+    {
+        let x = 2;
+        println!("{}", x);
+    }
+    // x is not available outside the scope
+    a*b
+}
+```
+
+- a:f32, b:f32 define the function arguments, ->f32 indicate the return type.
+- a*b is the return value, same as `return a*b;`, remember if don't use `return` keyward, don't use `;` in the end. 
+- variable only available in the scope, x is assigned inside {} scope, it will drop automatically when leaving the {}.
