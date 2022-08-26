@@ -12,15 +12,25 @@ import { PostFrontMatter } from 'types/PostFrontMatter'
 
 const root = process.cwd()
 
-export async function getStaticPaths() {
+export async function getStaticPaths({ locales }) {
   const tags = await getAllTags('blog')
 
+  const tags1 = Object.keys(tags).map((tag) => ({
+    params: {
+      tag,
+    },
+    locale: 'en',
+  }))
+
+  const tags2 = Object.keys(tags).map((tag) => ({
+    params: {
+      tag,
+    },
+    locale: 'zh',
+  }))
+
   return {
-    paths: Object.keys(tags).map((tag) => ({
-      params: {
-        tag,
-      },
-    })),
+    paths: tags1.concat(tags2),
     fallback: false,
   }
 }
@@ -29,7 +39,8 @@ export const getStaticProps: GetStaticProps<{ posts: PostFrontMatter[]; tag: str
   context
 ) => {
   const tag = context.params.tag as string
-  const allPosts = await getAllFilesFrontMatter('blog')
+  const name = context.locale == 'en' ? 'blog' : 'blog-' + context.locale
+  const allPosts = await getAllFilesFrontMatter(name)
   const filteredPosts = allPosts.filter(
     (post) => post.draft !== true && post.tags.map((t) => kebabCase(t)).includes(tag)
   )

@@ -10,8 +10,9 @@ import NewsletterForm from '@/components/NewsletterForm'
 
 const MAX_DISPLAY = 5
 
-export const getStaticProps: GetStaticProps<{ posts: PostFrontMatter[] }> = async () => {
-  const posts = await getAllFilesFrontMatter('blog')
+export const getStaticProps: GetStaticProps<{ posts: PostFrontMatter[] }> = async ({ locale }) => {
+  const name = locale == 'en' ? 'blog' : 'blog-' + locale
+  const posts = await getAllFilesFrontMatter(name)
 
   return { props: { posts } }
 }

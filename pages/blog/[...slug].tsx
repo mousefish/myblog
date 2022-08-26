@@ -7,17 +7,26 @@ import { GetStaticProps, InferGetStaticPropsType } from 'next'
 import { AuthorFrontMatter } from 'types/AuthorFrontMatter'
 import { PostFrontMatter } from 'types/PostFrontMatter'
 import { Toc } from 'types/Toc'
+import { useRouter } from 'next/router'
 
 const DEFAULT_LAYOUT = 'PostLayout'
 
-export async function getStaticPaths() {
+export async function getStaticPaths({ locales }) {
   const posts = getFiles('blog')
+  const map1 = posts.map((p) => ({
+    params: {
+      slug: formatSlug(p).split('/'),
+    },
+    locale: 'en',
+  }))
+  const map2 = posts.map((p) => ({
+    params: {
+      slug: formatSlug(p).split('/'),
+    },
+    locale: 'zh',
+  }))
   return {
-    paths: posts.map((p) => ({
-      params: {
-        slug: formatSlug(p).split('/'),
-      },
-    })),
+    paths: map1.concat(map2),
     fallback: false,
   }
 }
@@ -28,13 +37,14 @@ export const getStaticProps: GetStaticProps<{
   authorDetails: AuthorFrontMatter[]
   prev?: { slug: string; title: string }
   next?: { slug: string; title: string }
-}> = async ({ params }) => {
+}> = async ({ params, locale }) => {
+  const name = locale == 'en' ? 'blog' : 'blog-' + locale
   const slug = (params.slug as string[]).join('/')
-  const allPosts = await getAllFilesFrontMatter('blog')
+  const allPosts = await getAllFilesFrontMatter(name)
   const postIndex = allPosts.findIndex((post) => formatSlug(post.slug) === slug)
   const prev: { slug: string; title: string } = allPosts[postIndex + 1] || null
   const next: { slug: string; title: string } = allPosts[postIndex - 1] || null
-  const post = await getFileBySlug<PostFrontMatter>('blog', slug)
+  const post = await getFileBySlug<PostFrontMatter>(name, slug)
   // @ts-ignore
   const authorList = post.frontMatter.authors || ['default']
   const authorPromise = authorList.map(async (author) => {

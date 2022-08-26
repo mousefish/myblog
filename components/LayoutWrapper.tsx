@@ -7,12 +7,20 @@ import Footer from './Footer'
 import MobileNav from './MobileNav'
 import ThemeSwitch from './ThemeSwitch'
 import { ReactNode } from 'react'
+import { useRouter } from 'next/router'
 
 interface Props {
   children: ReactNode
 }
 
 const LayoutWrapper = ({ children }: Props) => {
+  const router = useRouter()
+  const { locale, locales, defaultLocale } = router
+
+  const changeLanguage = (e) => {
+    const locale = e.target.value
+    router.push(router.asPath, router.asPath, { locale })
+  }
   return (
     <SectionContainer>
       <div className="flex h-screen flex-col justify-between">
@@ -45,6 +53,24 @@ const LayoutWrapper = ({ children }: Props) => {
                 </Link>
               ))}
             </div>
+            <select
+              onChange={changeLanguage}
+              defaultValue={locale}
+              style={{ textAlignLast: 'center' }}
+              className="text-shadow-sm bg-transparent text-sm tracking-wide text-gray-900 dark:text-gray-100"
+            >
+              {locales.map((e) =>
+                e == 'zh' ? (
+                  <option value={e} key={e}>
+                    中文
+                  </option>
+                ) : (
+                  <option value={e} key={e}>
+                    {e}
+                  </option>
+                )
+              )}
+            </select>
             <ThemeSwitch />
             <MobileNav />
           </div>
