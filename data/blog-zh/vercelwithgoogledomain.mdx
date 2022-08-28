@@ -11,17 +11,17 @@ summary: '如何在vercel上使用google domain'
 ### 解决方法: 
 1. 在settings页, 选择Domain, 输入你的google域名后点击add: 
 
-![settings](/static/images/domain_config/setting.png)
+![settings](/static/images/domain_config/setting1.png)
 
 2. 通常下一步只需要选择默认配置, 然后点done.
 
-![domain](/static/images/domain_config/domain.png)
+![domain](/static/images/domain_config/domain1.png)
 
 3. 现在你应该可以看到两个生成的域名， 并且显示 `Invalid configuration`. 下一步我们需要配置google域名来完成最后一步.
 
 4. 登录你的google域名账户, 选择DNS - Custom Record, 点击 Manage Custom Record 按钮, 你会看到如下信息:
 
-![google](/static/images/domain_config/google_setting.png)
+![google](/static/images/domain_config/google_setting.jpg)
 
 5. 复制之前在Vercel生成的两个域名相应的`Ipv4`和`Domain name`内容到上面对应的表格里. 注意: 在Custom Record里初始只有一行内容，需要添加一行记录并且设置type为`CNAME`.
 
