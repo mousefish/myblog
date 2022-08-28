@@ -1,0 +1,28 @@
+---
+title: 'How to setup vercel domain with google domain'
+date: '2022-08-15'
+tags: ['nextjs']
+draft: false
+summary: 'How to link google domain in vercel'
+---
+
+Problem: Vercel is a platform to easily deploy and host the nextjs code. if you use Vercel domain, it's very easy to config. if you already have a google, it requires some extra step to configure it. 
+
+### Solution: 
+1. In settings tab, Domain, type your google domain  and click add button: 
+
+![settings](/static/images/domain_config/setting.png)
+
+2. Normally just use the default config, and click done.
+
+![domain](/static/images/domain_config/domain.png)
+
+3. Now you will see both the domains shows `Invalid configuration` and then next step is to config the google domain.
+
+4. Go to your google domain account, go to DNS - Custom Record, click Manage Custom Record button, you will see something as below:
+
+![google](/static/images/domain_config/google_setting.png)
+
+5. Copy the relative `Ipv4` and `Domain name` content from vercel domain settings to google domain settings. Notice: the default google record should only have one row, you need to add a row and set type to `CNAME`
+
+6. It takes some time for vercel to apply the new settings, and once it finish, it will auto generate a certificate. 🎉

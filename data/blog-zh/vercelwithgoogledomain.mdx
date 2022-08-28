@@ -1,0 +1,28 @@
+---
+title: '如何在vercel上使用google domain'
+date: '2022-08-15'
+tags: ['nextjs']
+draft: false
+summary: '如何在vercel上使用google domain'
+---
+
+问题: Vercel是一个可以非常方便配置和托管nextjs代码的平台.Vercel会默认提供一个子域名，如果要使用google域名在Vercel上，会需要一些额外的配置.
+
+### 解决方法: 
+1. 在settings页, 选择Domain, 输入你的google域名后点击add: 
+
+![settings](/static/images/domain_config/setting.png)
+
+2. 通常下一步只需要选择默认配置, 然后点done.
+
+![domain](/static/images/domain_config/domain.png)
+
+3. 现在你应该可以看到两个生成的域名， 并且显示 `Invalid configuration`. 下一步我们需要配置google域名来完成最后一步.
+
+4. 登录你的google域名账户, 选择DNS - Custom Record, 点击 Manage Custom Record 按钮, 你会看到如下信息:
+
+![google](/static/images/domain_config/google_setting.png)
+
+5. 复制之前在Vercel生成的两个域名相应的`Ipv4`和`Domain name`内容到上面对应的表格里. 注意: 在Custom Record里初始只有一行内容，需要添加一行记录并且设置type为`CNAME`.
+
+6. 到这里设置已经全部完成，Vercel可能需要一点时间来加载新的配置，并且在这之后会自动生成相应证书.🎉
