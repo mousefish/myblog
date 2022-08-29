@@ -1,0 +1,88 @@
+---
+title: 'Next.js Learning Key Note'
+date: '2022-08-16'
+tags: ['nextjs']
+draft: false
+summary: 'Learning the Next.js and some notes for future reference'
+---
+
+## Key features: File-based routing
+
+The routing is based on the file structure.
+
+For example:
+- Static page routing like: xxx.com/news
+just need to create a news.ts file under pages folder, next.js will auto convert the file path pages/news.tsx to xxx.com/about route.
+
+- Dynamic page routing like: xxx.com/news/id
+create a file under the path like pages/news/[id].tsx, or pages/news/[id]/index.tsx, next js will based on the ids to create a route like xxx.com/news/1.
+
+How to extract the dynimic [id]?
+```javascript
+import { useRouter} from 'next/router'
+
+const router = useRouter();
+router.query.id; //this will extract the id value of xxx.com/news/[id].js
+```
+
+## Key features: Page pre-rendering
+One of the Next.js important feature is page static generation and server-side rendering. This technology allowed get the page ready before display on client's screen, and it can provide more information for search engine.
+
+- static generation: build the page when you build the code, page content will not change. When page need to updated, we need to rebuild and deploy the page again. This method is good for those pages that don't need frequently updates. Because the page is pre-build, we need extra config to let compiler knows all the dynamic value in the router to generate all the pages. 
+
+Use xxx.com/news/id as example, if we have a following funcionts in news/[id].tsx file:
+
+```javascript
+export default function News(props){
+  const news = props.news;
+  //the code to process news or diplay
+}
+
+//This function is baically let the build process know all the dynamic pages need to generated.
+export async function getStaticPath() {
+  // if set ot false the page will be 404 if the is is not defined below. 
+  //if set to true, the missing id page will be generated on the fly. 
+  fallback: false
+  return {
+    path: [
+      //define the dynamic route[id] here, 
+      //if we have more ids like id=2, we nee extra params with id: 2
+      { params: { id: 1 } }
+    ]
+  }
+}
+
+//this function is running in the server side to fetch all the data for the pages. 
+getStaticProps(context){
+  //fetch data from an API or from any other data source
+  const id = context.params.id; // id data from the route
+  //we can based on the id to get the reative news. 
+  //or we can get all the news data.
+  //we save the result in dataObjects. 
+  return {
+    props: {
+      news: dataObjects, //this props data will pass as props to the component such as funcion News(props)
+    },
+    //every 10 seconds will re-generate the page
+    //this is to make sure the page is always up to data.
+    revalidate: 10 
+}
+```
+
+- server side rendering: render the page based on the request, it's good with the pages that change frequently.
+
+```javascript
+//this function won't run during the build process
+//all the code below is running on the server, not client.
+export async function getServerSideprops(context) {
+  //we can access request and response data from the context
+  const req = context.req;
+  const res = context.res;
+  //fetch the news from API or data source to save into dataObjects. 
+  return {
+    props: {
+      news: dataObjects
+    }
+  }
+}
+```

@@ -1,0 +1,87 @@
+---
+title: 'Next.js 学习笔记'
+date: '2022-08-16'
+tags: ['nextjs']
+draft: false
+summary: '记录了学习Next.js的一些核心知识方便日后查看'
+---
+
+## 核心功能: 基于文件路径的网页路由
+
+网页路由基于文件路径
+
+举个例子:
+- 如果我们有个静态网页页面为: xxx.com/news
+我们只需要在pages的文件夹下简历news.tsx文件，Next.js会自动将在pages文件夹内的news.tsx文件转换成相应页面路由xxx.com/new, 我们无需额外设置路由。
+
+- 如果我们有个动态网页页面: xxx.com/news/id
+我们只需要在pages文件夹内新建news文件夹，然后建立一个[id].tsx的文件，next会基于不同的id来建立相应页面的路由。比如如果用户点击id=1的news内容，路由生成将为xxx.com/news/1. 使用路径：pages/news/[id]/index.tsx 也可以达到相同目的。 
+
+以下代码为如何从路由中获取动态的id数值
+```javascript
+import { useRouter} from 'next/router'
+
+const router = useRouter();
+router.query.id; //这里会获得路由xxx.com/news/[id].js中的id数值
+```
+
+## 核心功能: 页面预渲染
+
+Next.js其中非常重要的一个功能为页面静态生成和服务器端预渲染。 这个技术能让网页在服务器生成后才传达到客户端显示， 它能为搜索引擎提供更多的内容搜索信息， 并且让客户端更快速的加载页面。 
+
+- 静态页面生成: 当编译代码的时候会生成所有需要的静态页面，生成后内容不会更改，当页面需要更改时，我们需要重新编译网页代码。因为大多数页面是不需要经常更新显示的，所以此方法对这类静态页面非常友好，也是此方法的主要适用对象。另外因为所有页面是在编译过程中生成的，所以我们需要额外的设置让编译器知道如何生成那些动态页面。 
+
+我们用 xxx.com/news/id 作为例子, 如果需要生成所有id相应的页面，我们要在news/[id].tsx文件中加入以下代码：
+
+```javascript
+export default function News(props){
+  const news = props.news;
+  //显示或处理news， props的内容来自下面的getStaticProps
+}
+
+//这个函数提供了生成所有页面所需的配置信息
+  //如果fallback设置为false,如果动态页面不存在在下面path的配置中，将跳转至404页面
+  //如果设置为true, 动态页面不存在的话将临时自动生成相应页面
+  fallback: false
+  return {
+    path: [
+      //这里设置不同的id， 比如我们有一个news的id是1，这里让编译器知道我们将生成news/1的页面
+      //同理，如果我们有个news的id是2，我们需要增加一条 { params: { id: 2 } }来让编译器知道需要生成news/2页面
+      { params: { id: 1 } }
+    ]
+  }
+}
+
+//这个函数只在服务器端运行，主要读取所有的news数据，将数据传递给相应页面。 这个函数将在对应的组件运行前提前运行
+getStaticProps(context){
+  //从API或其他数据源比如数据库中读取数据
+  const id = context.params.id; // 我们可以提取路由中相应的id
+  //我们可以基于读取的id来获得所对应的数据
+  //我们也可以读取所有news数据
+  //我们将用dataObjects表示读取的所有数据
+  return {
+    props: {
+      news: dataObjects, //props中的数值将传递给相应的component中， 比如上面的function News(props)
+    },
+    //每过10秒将重新编译代码生成页面
+    //确保页面永远保持最新状态
+    revalidate: 10 
+}
+```
+
+- 服务器端渲染： 页面将基于不同的请求动态在服务器端生成相应的数据页面， 此方法比较适合数据更新非常频繁的页面
+```javascript
+//此函数只在服务器端运行， 不会再客户端运行
+//此函数只在相应请求时运行，编译时不会运行
+export async function getServerSideprops(context) {
+  //我们可以在context中的到request和response的数据
+  const req = context.req;
+  const res = context.res;
+  //这里用dataObjects表示从API或其他数据源中读取的所有news内容
+  return {
+    props: {
+      news: dataObjects
+    }
+  }
+}
+```
