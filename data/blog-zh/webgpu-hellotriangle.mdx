@@ -1,9 +1,198 @@
 ---
-title: 'WebGPU Learning Note 1 - Hello Triangle'
+title: 'WebGPU 学习笔记 1 - Hello Triangle'
 date: '2022-08-20'
 tags: ['webgpu']
 draft: false
-summary: 'Learning WebGPU From Beginning, Render Triangle'
+summary: '从零开始学习WebGPU, 绘制一个Triangle'
 ---
 
 ## 点击 [HelloTriangle 演示 Demo](/examples/HelloTriangle) 查看本篇文章的演示
+
+### 1. Set up enviroment:
+
+All the examples are within Next.js enviroment, but any React or Webpack related project can use the same configuration.
+
+Library needed:
+
+- `three`: Three.js library, it is not used in this HelloTriangle example, but will be used in the furture examples. We only use the math and some common helper function in three.
+- `webgpu/types`: Typescript type definition for webgpu.
+
+Project configuration:
+
+- Config the `webgpu/types` in typescript file `tsconfig.json`:
+
+```json
+{
+  // ...
+  "compilerOptions": {
+    // ...
+    "typeRoots": ["./node_modules/@webgpu/types", "./node_modules/@types"]
+  }
+}
+```
+
+- Config the `wgsl` loader in file `webpack`, need webpack version after `webpack 5`, otherwise use `raw-loader` instead:
+
+```javascirpt
+    config.module.rules.push({
+      test: /\.wgsl$/i,
+      type: 'asset/source',
+    })
+```
+
+- Inline config the `wgsl` import in `type.d.ts` file
+
+```typescript
+declare module '*.wgsl' {
+  const shader: 'string'
+  export default shader
+}
+```
+
+### 2. Initial Engine
+
+#### 2.1 Adapter, Device and Context
+
+```typescript
+const adapter = await navigator.gpu.requestAdapter()
+const device = await adapter.requestDevice()
+
+const context = canvas.getContext('webgpu') as GPUCanvasContext
+
+const presentationFormat = navigator.gpu.getPreferredCanvasFormat()
+context.configure({
+  device,
+  format: presentationFormat, // format that belong to the final output texture
+  alphaMode: 'opaque',
+})
+```
+
+- `navigator.gpu` is the entry point of the webgpu, if navigator.gpu not in navigator, normally just because webgpu is not supported in the current webbrowser. currently when I write this article,
+  the webgpu still under development, so you need to either download a Chrom Canary verion or apply for a trail
+- The very first step will be get the adapter, `navigator.gpu.requestAdapter()`. adapter is a handle to our actual physical graphic card. A useful setting can be `powerPreference: 'high-performance'`
+  which indicates a request to prioritize performance over power consumption.
+- Device is the logical interface connection of physical graphic card, all major gpu function call are thru device.
+- Both device and adapter has `limits` and `features` describe the device capabilities, you can check the full list thru [offical guide](https://www.w3.org/TR/webgpu/#limits)
+- We need to get the context from canvas for final output to swapchain image, similar like in webgl `getContest('webgl2')`, and use `context.conigure` to set the proper configuration.
+
+#### 2.2 Shader
+
+Before we jump to the next thing, probably we need to talk about shader first. WebGPU use WGSL(WebGPU Shading Language) as the shader language, basically it is using the library [naga](https://github.com/gfx-rs/naga)
+to convert it to different platform's shading language.
+
+```text
+struct VertexOutput {
+    @builtin(position) Position : vec4<f32>,
+    @location(0) color: vec4<f32>,
+};
+
+@vertex
+fn main(@builtin(vertex_index) VertexIndex: u32) -> VertexOutput {
+    var pos = array<vec2<f32>, 3>(
+        vec2<f32>(0.0, 0.5),
+        vec2<f32>(-0.5,-0.5),
+        vec2<f32>(0.5, -0.5)
+    );
+
+    var color = array<vec4<f32>, 3>(
+        vec4<f32>(1.0,0.0,0.0,1.0),
+        vec4<f32>(0.0,1.0,0.0,1.0),
+        vec4<f32>(0.0,0.0,1.0,1.0)
+    );
+
+    var output: VertexOutput;
+    output.Position = vec4<f32>(pos[VertexIndex], 0.0, 1.0);
+    output.color = color[VertexIndex];
+
+    return output;
+}
+
+@fragment
+fn main(@location(0) color:vec4<f32>) -> @location(0) vec4<f32> {
+    return color;
+}
+```
+
+- VertexOutput is the struct for output infomation from vertex shader to fragment shader
+- main is the entry point that the name is defined in pipeline
+- main takes different parameters as input, here it use buildin vertex index as input, normally input will from a buffer
+- vertex buffer pass the 3 points position of triangle and the color to fragment, and fragment output color to draw pixels.
+- location defines connection between different stages input. if output has location(0) in vertex shader, fragment will have a same location(0) value as input.
+
+#### 2.3 Pipline
+
+```typescript
+const pipeline = device.createRenderPipeline({
+  layout: 'auto',
+  vertex: {
+    module: device.createShaderModule({
+      code: triangleVertWGSL,
+    }),
+    entryPoint: 'main',
+  },
+  fragment: {
+    module: device.createShaderModule({
+      code: redFragWGSL,
+    }),
+    entryPoint: 'main',
+    targets: [
+      {
+        format: presentationFormat,
+      },
+    ],
+  },
+  primitive: {
+    topology: 'triangle-list',
+  },
+})
+```
+
+- Pipline is the main setting to let GPU know how to deal with all the data, here is just the basic configuration, we will discuss about more later when we have more complex scene.
+- `vertex, fragment` is just setting the shader data we wrote above by using `device.createShaderModule()`, and here the entryPoint main is the same entry name in above shaders.
+- `primitive` defines the topology, it support following topology: "point-list","line-list","line-strip","triangle-list","triangle-strip". primitive also defines cullmode, frontface we will use in other examples.
+- `layout` is used for setting up binding group layout entry, we will discuss in other examples, here just use auto.
+
+### 3. Render Loop
+
+After we finish configuring the engine, we need to render it to the screen.
+
+```typescript
+const commandEncoder = device.createCommandEncoder()
+const textureView = context.getCurrentTexture().createView()
+
+const renderPassDescriptor: GPURenderPassDescriptor = {
+  colorAttachments: [
+    {
+      view: textureView,
+      clearValue: { r: 0.0, g: 0.0, b: 0.0, a: 1.0 },
+      loadOp: 'clear',
+      storeOp: 'store',
+    },
+  ],
+}
+
+const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
+passEncoder.setPipeline(pipeline)
+passEncoder.draw(3, 1, 0, 0)
+passEncoder.end()
+
+device.queue.submit([commandEncoder.finish()])
+```
+
+- We need `device.createCommandEncoder` to start create a sequence of command and put into one command buffer for GPU to excuting. The `device.queue.submit` will submit all those command buffer into the gpu driver queue.
+- The command buffer stages are: `creation`->`recording`->`ready`->`excuting`->`done`, here the createCommandEncoder is the creation stage which creates the command buffer, following before ends recording all the commands, and finish should mark commandbuffer is ready. submit changes the stages to excuting, and after gpu pick the job in the queue will signal the job done.
+- renderPassDescriptor sets the render pass, it sets the colorAttachments and depthStencilAttachment, here we only use one collorAttachment in this example.
+- colorAttachments is more like webgl's frambuffer colorAttachments, view here set the texture image of swapchain image getting from `context.getCurrentTexture().createView()`, remember we get the context from canvas above.
+- clearValue is like webgl clearColor, clear the view and set the color before excuting the render pass. This setting will be ignored when loadOp is not set to `clear`.
+- loadOp including "load" and "clear", "clear" will using the clearValue to reset this attachment. "store" will keep the current value of the attachment.
+- storeOp including "store" and "discard". "store" will store the renderpass results value in memory for later use, "discard" will drop the result.
+- `passEncoder.draw(3, 1, 0, 0);` draw command is:
+
+```
+draw(GPUSize32 vertexCount,
+     optional GPUSize32 instanceCount = 1,
+     optional GPUSize32 firstVertex = 0,
+     optional GPUSize32 firstInstance = 0);,
+```
+
+we have the vertexCount 3 and just 1 triangle, and both vertex and instance start from 0.

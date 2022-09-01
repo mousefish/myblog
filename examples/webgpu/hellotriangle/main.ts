@@ -2,8 +2,9 @@ import DeviceResource from '../enginecore/DeviceResource'
 
 import triangleVertWGSL from './triangle.vert.wgsl'
 import triangleFragWGSL from './triangle.frag.wgsl'
+import { makeExample, ExampleInit } from '../../../components/ExampleLayout'
 
-const HelloTriangle = async (canvasRef) => {
+const init: ExampleInit = async ({ canvasRef }) => {
   if (canvasRef.current === null) return
 
   const ds = new DeviceResource(canvasRef)
@@ -44,5 +45,10 @@ const HelloTriangle = async (canvasRef) => {
   }
   requestAnimationFrame(frame)
 }
+
+const HelloTriangle: () => JSX.Element = () =>
+  makeExample({
+    init,
+  })
 
 export default HelloTriangle

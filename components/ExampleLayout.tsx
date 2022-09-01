@@ -1,37 +1,50 @@
 import { useEffect, useRef, useState } from 'react'
-import HelloTriangle from 'examples/webgpu/hellotriangle/main'
-interface Props {
-  example: string
-}
 
-export const examples = {
-  HelloTriangle: import('../examples/webgpu/hellotriangle/main'),
-}
+export type ExampleInit = (params: {
+  canvasRef: React.RefObject<HTMLCanvasElement>
+}) => void | Promise<void>
 
-export default function ExampleLayout({ example }: Props) {
+const ExampleLayout: React.FunctionComponent<
+  React.PropsWithChildren<{
+    init: ExampleInit
+  }>
+> = (props) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null)
   const [error, setError] = useState<unknown | null>(null)
 
   useEffect(() => {
-    examples[example].then((example) => {
-      example.default(canvasRef).catch((err) => {
-        setError(err)
+    try {
+      const p = props.init({
+        canvasRef,
       })
-    })
-    return () => {
-      console.log('cleaning up --> unmount ')
+
+      if (p instanceof Promise) {
+        p.catch((err: Error) => {
+          console.error(err)
+          setError(err)
+        })
+      }
+    } catch (err) {
+      console.error(err)
+      setError(err)
     }
   }, [])
 
   return (
-    <div className="w-full">
+    <div className="h-full w-full">
       {error ? (
         <div>
           <p>WebGPU Error:</p>
           <p>{`${error}`}</p>
         </div>
       ) : null}
-      <canvas id="examplecanvas" ref={canvasRef} className="w-full" />
+      <canvas id="examplecanvas" ref={canvasRef} className="h-full w-full" />
     </div>
   )
+}
+
+export default ExampleLayout
+
+export const makeExample: (...props: Parameters<typeof ExampleLayout>) => JSX.Element = (props) => {
+  return <ExampleLayout {...props} />
 }
