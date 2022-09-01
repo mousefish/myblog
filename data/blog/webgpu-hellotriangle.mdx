@@ -1,0 +1,50 @@
+---
+title: 'WebGPU Learning Note 1 - Hello Triangle'
+date: '2022-08-20'
+tags: ['webgpu']
+draft: false
+summary: 'Learning WebGPU From Beginning, Render Triangle'
+---
+
+## Click [HelloTriangle Demo](/examples/HelloTriangle) to check the demo in this article
+
+### 1. Set up enviroment:
+
+All the example are within Next.js enviroment, but any React or Webpack related project can use the same configuration.
+
+Library needed:
+
+- `three`: Three.js library, it is not used in this HelloTriangle example, but will be used in the furture examples. We only use the math and some common helper function in three.
+- `webgpu/types`: Typescript type definition for webgpu.
+
+Project configuration:
+
+- Config the `webgpu/types` in typescript file `tsconfig.json`:
+
+```json
+{
+  // ...
+  "compilerOptions": {
+    // ...
+    "typeRoots": ["./node_modules/@webgpu/types", "./node_modules/@types"]
+  }
+}
+```
+
+- Config the `wgsl` loader in file `webpack`, need webpack version after `webpack 5`, otherwise use `raw-loader` instead:
+
+```javascirpt
+    config.module.rules.push({
+      test: /\.wgsl$/i,
+      type: 'asset/source',
+    })
+```
+
+- Inline config the `wgsl` import in `type.d.ts` file
+
+```typescript
+declare module '*.wgsl' {
+  const shader: 'string'
+  export default shader
+}
+```
