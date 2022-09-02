@@ -8,18 +8,18 @@ summary: '从零开始学习WebGPU, 绘制一个Triangle'
 
 ## 点击 [HelloTriangle 演示 Demo](/examples/HelloTriangle) 查看本篇文章的演示
 
-### 1. Set up enviroment:
+### 1. 环境配置:
 
-All the examples are within Next.js enviroment, but any React or Webpack related project can use the same configuration.
+网站的所有示例都基于 Next.js,但是所有 React 或者 Webpack 相关项目都可采用相同环境配置。
 
-Library needed:
+需要安装的程序库:
 
-- `three`: Three.js library, it is not used in this HelloTriangle example, but will be used in the furture examples. We only use the math and some common helper function in three.
-- `webgpu/types`: Typescript type definition for webgpu.
+- `three`: Three.js 是一个三维渲染库，本篇 HelloTriangle 没有用到这个库，今后会用到。Three.js 还没有支持 WebGPU，我们只用它的通用函数和数学函数来加速编写程序。
+- `webgpu/types`: webgpu 的 Typescript 类型定义， 非常有用。
 
-Project configuration:
+配置项目:
 
-- Config the `webgpu/types` in typescript file `tsconfig.json`:
+- 在 `tsconfig.json` 文件中配置`webgpu/types`:
 
 ```json
 {
@@ -31,7 +31,7 @@ Project configuration:
 }
 ```
 
-- Config the `wgsl` loader in file `webpack`, need webpack version after `webpack 5`, otherwise use `raw-loader` instead:
+- 在 `webpack` 配置中设置`wgsl`的读取方式， 以下方法需要`webpack 5`版本支持，如果低于此版本可以使用`raw-loader`代替:
 
 ```javascirpt
     config.module.rules.push({
@@ -40,7 +40,7 @@ Project configuration:
     })
 ```
 
-- Inline config the `wgsl` import in `type.d.ts` file
+- 在`type.d.ts`中定义`wgsl`的加载方式
 
 ```typescript
 declare module '*.wgsl' {
@@ -49,9 +49,9 @@ declare module '*.wgsl' {
 }
 ```
 
-### 2. Initial Engine
+### 2. 初始化 WebGPU 引擎
 
-#### 2.1 Adapter, Device and Context
+#### 2.1 Adapter, Device 和 Context
 
 ```typescript
 const adapter = await navigator.gpu.requestAdapter()
@@ -62,23 +62,21 @@ const context = canvas.getContext('webgpu') as GPUCanvasContext
 const presentationFormat = navigator.gpu.getPreferredCanvasFormat()
 context.configure({
   device,
-  format: presentationFormat, // format that belong to the final output texture
+  format: presentationFormat, // 最终显示的图像纹理格式
   alphaMode: 'opaque',
 })
 ```
 
-- `navigator.gpu` is the entry point of the webgpu, if navigator.gpu not in navigator, normally just because webgpu is not supported in the current webbrowser. currently when I write this article,
-  the webgpu still under development, so you need to either download a Chrom Canary verion or apply for a trail
-- The very first step will be get the adapter, `navigator.gpu.requestAdapter()`. adapter is a handle to our actual physical graphic card. A useful setting can be `powerPreference: 'high-performance'`
-  which indicates a request to prioritize performance over power consumption.
-- Device is the logical interface connection of physical graphic card, all major gpu function call are thru device.
-- Both device and adapter has `limits` and `features` describe the device capabilities, you can check the full list thru [offical guide](https://www.w3.org/TR/webgpu/#limits)
-- We need to get the context from canvas for final output to swapchain image, similar like in webgl `getContest('webgl2')`, and use `context.conigure` to set the proper configuration.
+- `navigator.gpu` 是所有 api 的起始入口，如果 navigator.gpu 没有定义，通常是浏览器暂时没有支持 webgpu，在写本篇文章时 webgpu 仍然在开发状态，如果需要浏览 webgpu 内容，下载 Chrome Canary 版本或需要申请一个 trail。
+- 首先第一步是要取得 adapter, `navigator.gpu.requestAdapter()`. adapter 负责连接物理显卡，其中一个很常用的设置是`powerPreference: 'high-performance'`，此设置设定了性能优先，也可以设置电池优先。
+- Device 用于连接显卡的逻辑接口，主要 API 功能都是通过调用 Device 来实现。
+- device 和 adapter 都有 `limits` 和 `features`属性来描述设备的可使用参数和能力。可以通过官网查看具体参数 [offical guide](https://www.w3.org/TR/webgpu/#limits)
+- 我们需要通过 context 来获得需要在屏幕上最终显示的图像绘布, 这个和 webgl2 的`getContest('webgl2')`类似, 并且使用 `context.conigure` 来配置参数。
 
 #### 2.2 Shader
 
-Before we jump to the next thing, probably we need to talk about shader first. WebGPU use WGSL(WebGPU Shading Language) as the shader language, basically it is using the library [naga](https://github.com/gfx-rs/naga)
-to convert it to different platform's shading language.
+在我们进入下一步代码之前，我们先来了解一下 Shader.WebGPU 使用 WGSL(WebGPU Shading Language)作为 shader 的编程语言, 底层它借助了[naga](https://github.com/gfx-rs/naga)程序库
+来将其转换为相应平台的 shader 语句。
 
 ```text
 struct VertexOutput {
@@ -113,11 +111,11 @@ fn main(@location(0) color:vec4<f32>) -> @location(0) vec4<f32> {
 }
 ```
 
-- VertexOutput is the struct for output infomation from vertex shader to fragment shader
-- main is the entry point that the name is defined in pipeline
-- main takes different parameters as input, here it use buildin vertex index as input, normally input will from a buffer
-- vertex buffer pass the 3 points position of triangle and the color to fragment, and fragment output color to draw pixels.
-- location defines connection between different stages input. if output has location(0) in vertex shader, fragment will have a same location(0) value as input.
+- VertexOutput 提供了 vertex shader 向 fragment shader 需要的输出信息结构
+- main 函数是所有的入口函数，会在之后的 pipeline 中定义。
+- main 函数可以使用不同的参数，这里使用内建参数 vertex_index 作为输入，在一般使用中通常此输入会来自于一个缓存。我们会在之后的文章中了解缓存。
+- 这里 vertex shader 会将三角形三个顶点信息以及相对应的颜色传递给 fragment shader, fragment shader 输出对应的像素点颜色。
+- location 是连接 shader 的接口，如果在 vertex shader 中定义了输出的 location(0)，fragment shader 需要使用相同的 location(0)来读取 vertex shader 输出的内容。
 
 #### 2.3 Pipline
 
@@ -147,14 +145,14 @@ const pipeline = device.createRenderPipeline({
 })
 ```
 
-- Pipline is the main setting to let GPU know how to deal with all the data, here is just the basic configuration, we will discuss about more later when we have more complex scene.
-- `vertex, fragment` is just setting the shader data we wrote above by using `device.createShaderModule()`, and here the entryPoint main is the same entry name in above shaders.
-- `primitive` defines the topology, it support following topology: "point-list","line-list","line-strip","triangle-list","triangle-strip". primitive also defines cullmode, frontface we will use in other examples.
-- `layout` is used for setting up binding group layout entry, we will discuss in other examples, here just use auto.
+- Pipline 是引擎初始化中最主要的部分，它就像一个解释器，告诉 GPU 如何读懂所有我们要向 GPU 传递的数据。 这里定义了相对简单必要的参数，之后会逐渐由更复杂的 pipeline 来适用不同的情况。
+- `vertex, fragment` 解释了我们上面介绍的 vertex 和 fragment shader, 通过 `device.createShaderModule()`读取 shader 来生成相关可用于 GPU 加载的信息, 这里的 entryPoint main 是我们在上面 shader 中使用的函数入口名.
+- `primitive` 定义了绘制的拓扑结构，官方支持的有: "point-list","line-list","line-strip","triangle-list","triangle-strip". primitive 同样定义了图像正面和背面的时针顺序以及是否要只绘制正面或背面。
+- `layout` 用于设置 binding group layout entry, 这里只用了 auto，会在之后的 uniform 中介绍。
 
 ### 3. Render Loop
 
-After we finish configuring the engine, we need to render it to the screen.
+在我们配置好所有引擎信息后，接下来我们要进入图像渲染阶段来生成用于屏幕显示的图像.
 
 ```typescript
 const commandEncoder = device.createCommandEncoder()
@@ -179,14 +177,14 @@ passEncoder.end()
 device.queue.submit([commandEncoder.finish()])
 ```
 
-- We need `device.createCommandEncoder` to start create a sequence of command and put into one command buffer for GPU to excuting. The `device.queue.submit` will submit all those command buffer into the gpu driver queue.
-- The command buffer stages are: `creation`->`recording`->`ready`->`excuting`->`done`, here the createCommandEncoder is the creation stage which creates the command buffer, following before ends recording all the commands, and finish should mark commandbuffer is ready. submit changes the stages to excuting, and after gpu pick the job in the queue will signal the job done.
-- renderPassDescriptor sets the render pass, it sets the colorAttachments and depthStencilAttachment, here we only use one collorAttachment in this example.
-- colorAttachments is more like webgl's frambuffer colorAttachments, view here set the texture image of swapchain image getting from `context.getCurrentTexture().createView()`, remember we get the context from canvas above.
-- clearValue is like webgl clearColor, clear the view and set the color before excuting the render pass. This setting will be ignored when loadOp is not set to `clear`.
-- loadOp including "load" and "clear", "clear" will using the clearValue to reset this attachment. "store" will keep the current value of the attachment.
-- storeOp including "store" and "discard". "store" will store the renderpass results value in memory for later use, "discard" will drop the result.
-- `passEncoder.draw(3, 1, 0, 0);` draw command is:
+- 我们需要使用`device.createCommandEncoder`来建立一系列可以存入 command buffer 的命令行以便之后 GPU 执行。 `device.queue.submit` 会提交所有的 command buffer 到 GPU 的执行队列中.
+- command buffer 不同时期的状态为: `creation`->`recording`->`ready`->`excuting`->`done`, createCommandEncoder 是第一个 creation 阶段，用于建立一个 command buffer, 之后的命令行为 recording 阶段, 结束后通过使用 finish 来让 command buffer 进入 ready 阶段. submit 将提交 command buffer 并进入 excuting 阶段, gpu 结束执行队列中提交的任务后发送 done 信号.
+- renderPassDescriptor 用于配置 render pass, 它设定了 colorAttachments 和 depthStencilAttachment, 在这个示例中只用了一个 collorAttachment 作为最后需要输出的图像配置。
+- colorAttachments 比较像是 webgl 的 frambuffer colorAttachments, 使用 `context.getCurrentTexture().createView()`来获得当前 swapchain 的图像纹理，并将它配置与 colorAttachments 的 view 中
+- clearValue 类似于 webgl 的 clearColor, 它负责在 render pass 前清除画布颜色并设定为这里设置的颜色. 当 loadOp 没有设置为`clear`时，clearValue 的设置将会被忽略.
+- loadOp 包含 "load" 和 "clear"操作, "clear"会使用 clearValue 定义的颜色呢来重置画布. "store" 将会保存当前的画布颜色.
+- storeOp 包含 "store" 和 "discard"操作. "store" 会将 renderpass 的结果存储在内存中方便之后使用, "discard" 将结果直接丢弃不会储存.
+- `passEncoder.draw(3, 1, 0, 0);` 命令行定义如下:
 
 ```
 draw(GPUSize32 vertexCount,
@@ -195,4 +193,4 @@ draw(GPUSize32 vertexCount,
      optional GPUSize32 firstInstance = 0);,
 ```
 
-we have the vertexCount 3 and just 1 triangle, and both vertex and instance start from 0.
+在这里三角形的顶点为 3 个，并且我们只绘制 1 个三角形，所以 vertexCount 为 3， instanceCount 为 1，顶点和实例的初始位置都为 0.

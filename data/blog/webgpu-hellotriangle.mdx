@@ -68,7 +68,7 @@ context.configure({
 ```
 
 - `navigator.gpu` is the entry point of the webgpu, if navigator.gpu not in navigator, normally just because webgpu is not supported in the current webbrowser. currently when I write this article,
-  the webgpu still under development, so you need to either download a Chrom Canary verion or apply for a trail
+  the webgpu still under development, so you need to either download a Chrome Canary verion or apply for a trail
 - The very first step will be get the adapter, `navigator.gpu.requestAdapter()`. adapter is a handle to our actual physical graphic card. A useful setting can be `powerPreference: 'high-performance'`
   which indicates a request to prioritize performance over power consumption.
 - Device is the logical interface connection of physical graphic card, all major gpu function call are thru device.
@@ -116,7 +116,7 @@ fn main(@location(0) color:vec4<f32>) -> @location(0) vec4<f32> {
 - VertexOutput is the struct for output infomation from vertex shader to fragment shader
 - main is the entry point that the name is defined in pipeline
 - main takes different parameters as input, here it use buildin vertex index as input, normally input will from a buffer
-- vertex buffer pass the 3 points position of triangle and the color to fragment, and fragment output color to draw pixels.
+- vertex shader pass the 3 points position of triangle and the color to fragment, and fragment output color to draw pixels.
 - location defines connection between different stages input. if output has location(0) in vertex shader, fragment will have a same location(0) value as input.
 
 #### 2.3 Pipline

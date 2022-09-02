@@ -21,6 +21,10 @@ export default function App({ Component, pageProps }: AppProps) {
     <ThemeProvider attribute="class" defaultTheme={siteMetadata.theme}>
       <Head>
         <meta content="width=device-width, initial-scale=1" name="viewport" />
+        <meta
+          httpEquiv="origin-trial"
+          content="Ak7a2eEMgMWEAoUIk+It1BsMzU/QNJDzz8a/p1qkZ7RFsJgl4QlDh2bntTpNnrO/fQzxAwtIlR44VvWAS3eRoA4AAABQeyJvcmlnaW4iOiJodHRwczovL3d3dy5zZWFud2FuZy5kZXY6NDQzIiwiZmVhdHVyZSI6IldlYkdQVSIsImV4cGlyeSI6MTY3NTIwOTU5OX0="
+        />
       </Head>
       {isDevelopment && isSocket && <ClientReload />}
       <Analytics />
