@@ -12,6 +12,7 @@ type Props = {
 
 export const examples = {
   HelloTriangle: dynamic(() => import('../../examples/webgpu/hellotriangle/main')),
+  RotatingCube: dynamic(() => import('../../examples/webgpu/rotatingcube/main')),
 }
 
 function ExampleDemo({ slug }: Props): JSX.Element {
