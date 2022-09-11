@@ -10,12 +10,12 @@ const init: ExampleInit = async ({ canvasRef }) => {
   const ds = new DeviceResource(canvasRef)
   await ds.initializeDevice()
   ds.createContxt()
-  ds.createRenderPipeline({
-    vertexShader: triangleVertWGSL,
-    fragmentShader: triangleFragWGSL,
-    topology: 'triangle-list',
-    layout: 'auto',
-  })
+  const renderPipeline = ds.createRenderPipeline(
+    triangleVertWGSL,
+    triangleFragWGSL,
+    'triangle-list',
+    'auto'
+  )
 
   function frame() {
     if (!canvasRef.current) return
@@ -35,7 +35,7 @@ const init: ExampleInit = async ({ canvasRef }) => {
     }
 
     const passEncoder = commandEncoder.beginRenderPass(renderPassDescriptor)
-    passEncoder.setPipeline(ds.renderPipeline)
+    passEncoder.setPipeline(renderPipeline)
     passEncoder.draw(3, 1, 0, 0)
 
     passEncoder.end()

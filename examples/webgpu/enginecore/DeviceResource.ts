@@ -5,7 +5,6 @@ class DeviceResource {
   context: GPUCanvasContext
   presentationFormat: GPUTextureFormat
   presentationSize: number[]
-  renderPipeline: GPURenderPipeline
 
   constructor(canvas) {
     this.canvasRef = canvas
@@ -62,13 +61,21 @@ class DeviceResource {
     this.canvasRef.current.height = this.presentationSize[1]
   }
 
-  createRenderPipeline({ vertexShader, fragmentShader, topology, layout }) {
-    this.renderPipeline = this.gpuDevice.createRenderPipeline({
+  createRenderPipeline(
+    vertexShader,
+    fragmentShader,
+    topology,
+    layout,
+    buffers = [],
+    depthStencil = undefined
+  ) {
+    return this.gpuDevice.createRenderPipeline({
       vertex: {
         module: this.gpuDevice.createShaderModule({
           code: vertexShader,
         }),
         entryPoint: 'main',
+        buffers: buffers,
       },
       fragment: {
         module: this.gpuDevice.createShaderModule({
@@ -82,7 +89,16 @@ class DeviceResource {
         cullMode: 'none',
       },
       layout: layout,
+      depthStencil: depthStencil,
     })
+  }
+
+  createDefaultDepthStencilConfig() {
+    return {
+      depthWriteEnalbed: true,
+      depthCompare: 'less',
+      format: 'depth24plus',
+    }
   }
 }
 
