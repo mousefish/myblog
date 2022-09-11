@@ -50,8 +50,8 @@ new Uint16Array(indiceBuffer.getMappedRange()).set(cube.index.array)
 indiceBuffer.unmap()
 ```
 
-- Vertex and Buffer creation is very similar, the only difference is usage here to declear what is this buffer used for.
-- size is the byte size of the buffer, so like above triangle, vertex A has 3 point, and we have 3 vertex, it should be 3 _ 3 _ byte sizeof Float32Array element
+- Vertex and index Buffer creation is very similar, the only difference is usage here to declear what is this buffer used for.
+- size is the byte size of the buffer, so like above triangle, vertex A has 3 point, and we have 3 vertex, it should be 3 x 3 x byte sizeof Float32Array element
 - mappedAtCreation means if we want this buffer to be mapped, since we can not directly transfer data from CPU memory to GPU memory, before we transfer the data, need to map the buffer first.
 - and the last step before unmap the memory, is the real data transfer happens.
 
@@ -79,8 +79,8 @@ vertex: {
 
 ```
 
-- arrayStride is the byte size for each single vertex data, here because each vertex we only have 3 position point, so it's 3 _ byte size of float number. In genera case,
-  the vertex can also contain texture information u, v or normal information, so if it has 3 normal value follow by position point, the arrayStride will be ( 3 + 3 ) _ byte size of float number
+- arrayStride is the byte size for each single vertex data, here because each vertex we only have 3 position point, so it's 3 \_ byte size of float number. In genera case,
+  the vertex can also contain texture information u, v or normal information, so if it has 3 normal value follow by position point, the arrayStride will be ( 3 + 3 ) x byte size of float number
 - offset is the position of the vertex in the array, so same if we have normal again, the normal offset will be 3 \* byte size of float number which is the position space in front of it
 
 Last in render loop, we will bind the vertex buffer and index buffer to render
@@ -275,7 +275,7 @@ passEncoder.setBindGroup(1, uniformModelBindGroup)
 
 #### What is Depth Buffer and Why we need it?
 
-We we draw this cube, if the back face has different color with front face, we need draw back face first then draw front face to make the color correct. Because when we project 3D to 2D screen position,
+When we draw this cube, if the back face has different color with front face, we need draw back face first then draw front face to make the color correct. Because when we project 3D to 2D screen position,
 back face will be in the same pixel as front face, if we draw front face first then draw back face color, the back face color will overwrite the front face in the same pixel point.
 
 Depth Buffer is a texture that stores the z-coordinate of rendered pixels, so each pixel now have a depth value in range [0.0, 1.0] that we know which one is more close to camera and we need to use the closer pixel and drop the further one.

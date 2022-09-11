@@ -7,3 +7,305 @@ summary: '从零开始学习WebGPU, 绘制一个翻滚的方块'
 ---
 
 ## 点击 [翻滚吧！方块 演示 Demo](/examples/RotatingCube) 查看本篇文章的演示
+
+### 1. Vertex Buffer 和 Index Buffer
+
+#### 什么是 vertex buffer(顶点缓存) 和 index buffer（索引缓存）?
+
+Buffer(缓存)是一个连续的内存空间用于存储可供 GPU 使用的数据。我们主要用 vertex buffer（顶点缓存）和 index buffer（索引缓存）来绘制图像， vertex buffer（顶点缓存）主要存储顶点相关数据，index buffer（索引缓存）则是如何连接顶点的索引数据。 比如以下图形:
+
+![vertexindex](/static/images/webgpu/vertexindex.png)
+
+如果我们需要使用 vertex buffer 来绘制上面的三角形，我们需要知道顶点 A,B,C 的位置， A，B，C 的位置信息就是最简单的需要存入 vertex buffer（顶点缓存）的顶点数据。
+我们需要将 A,B,C 的顶点信息存入 vertex buffer（顶点缓存）后，GPU 才能从这个缓存中读取数据。 除了顶点外，我们还要告诉 GPU 该通过什么顺序来连接三个顶点，比如如果连接顺序为逆时针顺序，我们的连接顺序将为 A->B->C，
+各个顶点的数据的索引就是我们将储存在 index buffer（索引缓存）中的数据， 比如这里 A 是第 0 个数据，B 是第 1 个，C 是第 2 个，所以 index buffer（索引缓存）中的数据将为 0,1,2。
+
+#### 如何创建 vertex buffer(顶点缓存) 和 index buffer（索引缓存）?
+
+首先第一步我们使用 THREE.JS 的 BoxGeometry 来建立一个方块数据信息, 以便我们可以从中直接获得 vertex（顶点）和 index（索引）数据来存入 vertex buffer(顶点缓存) 和 index buffer（索引缓存）。
+
+```typescript
+const cube = new THREE.BoxGeometry(2, 2, 2)
+```
+
+下面我们先创建 vertex buffer(顶点缓存) 和 index buffer（索引缓存）来存储上面的顶点和索引数据。
+
+```typescript
+const vertexByteLength = cube.attributes.position.count * 3 * Float32Array.BYTES_PER_ELEMENT
+const vertexBuffer = ds.gpuDevice.createBuffer({
+  size: vertexByteLength,
+  usage: GPUBufferUsage.VERTEX,
+  mappedAtCreation: true,
+})
+new Float32Array(vertexBuffer.getMappedRange()).set(cube.attributes.position.array)
+vertexBuffer.unmap()
+
+const indiceByteLength = cube.index.count * Uint16Array.BYTES_PER_ELEMENT
+const indiceBuffer = ds.gpuDevice.createBuffer({
+  size: indiceByteLength,
+  usage: GPUBufferUsage.INDEX,
+  mappedAtCreation: true,
+})
+new Uint16Array(indiceBuffer.getMappedRange()).set(cube.index.array)
+indiceBuffer.unmap()
+```
+
+- 顶点和索引缓存的创建非常类似， 唯一最主要的区别主要是 usage 里顶点为`GPUBufferUsage.VERTEX`而索引为`GPUBufferUsage.INDEX`
+- size 为缓存的字节大小，比如上面的三角形，有三个顶点，每个顶点有三个坐标（x,y,z）， 所以 size 为 3x3xFloat 的字节大小。
+- mappedAtCreation 指是否要在建立缓存时同时开启缓存映射，通常情况下 CPU 是无法读取和写入 GPU 的缓存的，在读取和写入缓存前先要映射缓存来进行进一步操作。
+- 下面的内容为将数据写入缓存， 然后关闭映射。
+
+接下来我们需要在 pipline 中配置刚刚建立的顶点缓存来让着色器知道如何读取缓存中的数据。所以在`createRenderPipeline` 我们添加了如下顶点缓存配置。
+
+```typescript
+...
+vertex: {
+    module: this.gpuDevice.createShaderModule({
+        code: vertexShader,
+    }),
+    entryPoint: 'main',
+    buffers: {
+        arrayStride: 3 * Float32Array.BYTES_PER_ELEMENT,
+        attributes: [
+            {
+                shaderLocation: 0,
+                offset: 0,
+                format: 'float32x3',
+            }
+        ]
+    },
+},
+...
+
+```
+
+- arrayStride 为单个顶点数据的字节大小，比如在这里每个顶点我们只有三个(x,y,z)的坐标点数据，所以字节大小为 3 x float 的字节大小 = 12. 通常情况下, 一个顶点还会包含 texture 的信息 uv 或者法向向量信息，如果在坐标点数据后还有三个法向向量信息，arrayStride 将为（3 + 3）x float 的字节大小 = 24.
+- offset 为每个顶点中不同数据类型的起始位置，同样用法向向量为例，如果顶点坐标数据的 offset 为 0，后面跟着的法向向量的起始 offset 为 3xfloat 字节大小=12.
+
+最后在渲染过程中，我们将 bind 上面建立的顶点和索引缓存来进行绘制。
+
+```typescript
+passEncoder.setVertexBuffer(0, vertexBuffer)
+passEncoder.setIndexBuffer(indiceBuffer, 'uint16')
+passEncoder.drawIndexed(cube.index.count, 1, 0, 0, 0)
+```
+
+- 完整的 setVertexBuffer 函数为 `setVertexBuffer(GPUIndex32 slot, GPUBuffer buffer, optional GPUSize64 offset = 0, optional GPUSize64 size);` slot 为着色器重设置的 slot，
+  buffer 为上面建立的顶点缓存, offset 则是在顶点缓存的起始位置偏移量, size 为这个三维图形的顶点缓存的字节大小.
+- 完整的 setIndexBuffer 函数为 `setIndexBuffer(GPUBuffer buffer, GPUIndexFormat indexFormat, optional GPUSize64 offset = 0, optional GPUSize64 size);` buffer 是上面建立的索引缓存,
+  indexFormat 是索引缓存的类型信息,通常为'uint16', 有时候也会使用'uint32'如果绘制图形过于复杂超过 uint16 的长度限制. size 和 offset 的作用与上面的顶点缓存类似.
+- `drawIndexed(indexCount, instanceCount, firstIndex, baseVertex, firstInstance)`, 类似于使用 draw 函数， 这里使用 drawIndexed 来绘制具有索引的图形，所以我们需要给出 indexCount 来提供索引数量, 这里也可以提供 baseVertex 来这只索引在顶点缓存中的偏移量.
+
+### 2. Uniform
+
+#### What is Uniform?
+
+Uniform 为一组可以被所有着色器共用的数据， 这里我们使用 Uniform 来传递 model, view, projection 的矩阵信息和颜色信息到着色器来提供相应计算使用。
+
+#### 什么是 MVP 矩阵?
+
+![mvp](/static/images/webgpu/mvp.jpg)
+
+MVP 矩阵负责将一个三维图形的三维绘制位置信息转换为 2 维屏幕上的显示位置信息：
+
+1.  首先我们使用 model 矩阵来将一个在原点位置（0,0,0）的三维物体移动到实际应该摆放的位置和大小, 比如说如果原点（0,0,0）是房间的中心位置，我们在原点坐标建立了一把椅子,
+    但是椅子实际应该摆放在房间的西北角面朝南， 并且实际大小略小于建立时的大小。model 矩阵就负责将原点的椅子移动到正确的摆放位置并且缩小为正确的大小。 矩阵如何转换坐标系，可以参考相应的数学教程，不在这里做详细介绍。
+2.  然后 view 矩阵继续讲三维物体转换为摄像机的相关位置。摄像机就如同我们的眼睛，当我们的眼睛看向房间西北角的椅子时，view 矩阵就负责将椅子转换为以我们眼睛为原点坐标的相应位置来方便之后进一步的计算。
+3.  最后 Projection 矩阵则是负责将一个三维物体的坐标系投影为 2D 的屏幕位置坐标系来最后显示在屏幕上。
+
+#### 如何配置 Uniform?
+
+如同我们来建立方块的顶点和索引信息一样， 我们首先使用 THREE.js 来创建一个摄像机，通过这个摄像机我们可以获得相应的 projection 和 view 矩阵. 在这里我们不讨论如何具体建立 projection 和 view 矩阵，可以参考相关的三维数学知识。
+
+```typescript
+const aspect = canvasRef.current.width / canvasRef.current.height
+const camera = new THREE.PerspectiveCamera(72, aspect, 1, 100.0)
+camera.position.z = 4
+camera.lookAt(0, 0, 0)
+camera.updateMatrixWorld()
+```
+
+这个例子中需要两个 uniform， 一个用于储存 view \* projection 矩阵，因为我们在此示例中不会移动摄像头，所以此静态数据在建立后将不会发生改变。
+第二个用于储存 model 矩阵和颜色信息，内容将随着时间发生改变。
+
+```typescript
+const _projectViewMatrix = camera.projectionMatrix.clone().multiply(camera.matrixWorldInverse)
+
+const uniformBufferSize = Float32Array.BYTES_PER_ELEMENT * 16
+const uniformBuffer = ds.gpuDevice.createBuffer({
+  size: uniformBufferSize,
+  usage: GPUBufferUsage.UNIFORM,
+  mappedAtCreation: true,
+})
+new Float32Array(uniformBuffer.getMappedRange()).set(_projectViewMatrix.toArray())
+uniformBuffer.unmap()
+
+const uniformModelBufferSize =
+  Float32Array.BYTES_PER_ELEMENT * 16 + Float32Array.BYTES_PER_ELEMENT * 4
+const uniformModelBuffer = ds.gpuDevice.createBuffer({
+  size: uniformModelBufferSize,
+  usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+})
+```
+
+- uniform 缓存的建立和上面顶点和索引缓存的建立非常类似， 唯一不同的是我们将 usage 设定为 uniform 相关的类型：GPUBufferUsage.UNIFORM。
+- 因为我们需要持续更新第二个缓存，所以我们无需再建立使就映射缓存， 我们通过下面的方法来更新缓存内容，但是此方法相对于直接映射转移数据会低效一些。
+
+```typescript
+ds.gpuDevice.queue.writeBuffer(
+  uniformModelBuffer,
+  0,
+  uniformArray.buffer,
+  uniformArray.byteOffset,
+  uniformArray.byteLength
+)
+```
+
+uniformArray 存放了不停变换的 Model 矩阵和颜色信息，我们会随着和时间不停的改变。而 uniformModelBuffer 则是需要更新的缓存， 然后使用 writeBuffer 命令存放入队列中，之后 GPU 将执行队列中的相应命令来将更新缓存。
+
+在这之后，我们需要建立能配置管线的 PiplineLayout 和 BindGroupLayout.
+
+```typescript
+const uniformBindGroupLayout = ds.gpuDevice.createBindGroupLayout({
+  entries: [
+    {
+      binding: 0,
+      visibility: GPUShaderStage.VERTEX,
+      buffer: {
+        type: 'uniform',
+        hasDynamicOffset: false,
+      },
+    },
+  ],
+})
+
+const pipelineLayout = ds.gpuDevice.createPipelineLayout({
+  bindGroupLayouts: [uniformBindGroupLayout, uniformBindGroupLayout],
+})
+```
+
+并且将上述的配置 `createRenderPipeline` 设置在管线对应的 layout 部分
+
+```typescript
+...
+ layout: pipelineLayout, // 之前配置为'auto'
+ ...
+```
+
+为了更好的理解上面的设置，我们先来看一下着色器 WGSL 中的一些改变：
+
+```text
+struct Uniforms {
+   viewProjectionMatrix: mat4x4<f32>,
+}
+
+struct ModelUniforms {
+   modelMatrix: mat4x4<f32>,
+   color: vec4<f32>,
+}
+
+@binding(0) @group(0) var<uniform> uniforms: Uniforms;
+@binding(0) @group(1) var<uniform> modelUniforms: ModelUniforms;
+```
+
+在着色器中我们定义了 Uniform 和 ModelUniforms 两个结构，Uniform 表示了上面静态的 view\*projection 矩阵，ModelUnfirom 就是 Model 矩阵和颜色，binding(0)是上面的 uniformBindingGroupLayout 中的 binding 的数值，因为我们有两个 unifrom 在不同的 goup 中，
+所以在上面 pipelineLayout 中 `[uniformBindGroupLayout, uniformBindGroupLayout]` 的索引位置对应了这里着色其中的 group(0) 和 group(1). 在 uniformBindGroupLayout 中的 visibility 定义了 GPUShaderStage.VERTEX， 所以在顶点着色器中我们可以读取 uniform 的数据。
+
+```text
+@vertex
+fn main(@location(0) position: vec3<f32>) -> VertexOutput {
+    var output: VertexOutput;
+    output.Position = uniforms.viewProjectionMatrix * modelUniforms.modelMatrix * vec4(position.xyz,1.0);
+    output.color = modelUniforms.color;
+    return output;
+}
+```
+
+在着色器的 main 函数中，我们使用了上面结构中定义的数据用于计算位置信息和颜色信息。
+
+最后在渲染前，我们需要建立相应的 binding groups 来连接 bindGroupLayout 和 uniform 缓存为渲染做准备.
+
+```typescript
+const uniformBindGroup = ds.gpuDevice.createBindGroup({
+  layout: renderPipeline.getBindGroupLayout(0),
+  entries: [
+    {
+      binding: 0,
+      resource: {
+        buffer: uniformBuffer,
+      },
+    },
+  ],
+})
+
+const uniformModelBindGroup = ds.gpuDevice.createBindGroup({
+  layout: renderPipeline.getBindGroupLayout(1),
+  entries: [
+    {
+      binding: 0,
+      resource: {
+        buffer: uniformModelBuffer,
+      },
+    },
+  ],
+})
+```
+
+- layout 的内容上面 pipeline 中 BindGroupLayout 的对应索引，和着色器中的@group 保持一致, 比如 viewprojection unifrom 在 pipelineLayout`[uniformBindGroupLayout, uniformBindGroupLayout]`中的索引位置为 0,
+  而 modeluniform 索引位置则为 1.
+- binding 对应于上面 bindGroupLayout 中的 bingding 和着色器中的@binding
+- buffer 则是上面建立的相对应的 uniform 缓存
+
+我们用 setBindGroup 来在渲染中设定我们建立的不同 BindGroup:
+
+```typescript
+passEncoder.setBindGroup(0, uniformBindGroup)
+passEncoder.setBindGroup(1, uniformModelBindGroup)
+```
+
+- 第一个参数(0 , 1) 为着色器中的@group 对应数字和 pipelineLayout 中的对应索引位置
+- 第二个参数则是上面建立的不同 BindGroup
+
+到这里 Unifrom 的配置就完成了，最后我们需要建立一个 depth buffer 来完成最后一步
+
+### 3. Depth Buffer
+
+#### 什么是 Depth Buffer? 我们为什么要用 Depth Buffer?
+
+方块有六个面，在我们绘制这个方块在屏幕上时，如果离摄像机较远的面的颜色和较近的面的颜色不同，我们需要先绘制较远的面颜色再绘制较近的面的颜色来保证最后得到的颜色是正确的。因为当我们将 3D 物体投影为 2D 屏幕上的像素时，较远的面和较近的面的像素点有可能落在同一个屏幕的像素点上，
+同一个像素点只能显示一种颜色，通常因为较远的面投影的像素点被较近的面的投影像素点遮挡，所以正确的颜色应该选择为离摄像头较近的像素点颜色， 但是如果我们先绘制离摄像头较近的像素点再绘较远像素点，前一个先绘制的较近的颜色会被后面绘制的较远的像素点颜色覆盖，导致最终颜色不是我们希望的颜色。
+
+为解决这种情况，我们需要使用 Depth Buffer。 Depth Buffer 是一个储存了 z 坐标或者叫深度坐标的纹理图片，因此我们在 Depth Buffer 中有了每个投影后的点的深度值， 深度值得范围为[0.0, 1.0]。 通过这个深度值我们知道哪个面投影后的像素点距离摄像机更远，哪个距离更近，我们可以只绘制距离更近的像素点，丢弃更远的来保证最后颜色的准确性。
+
+#### 如何配置 Depth Buffer?
+
+```typescript
+const depthTexture = ds.gpuDevice.createTexture({
+  size: ds.presentationSize,
+  format: 'depth24plus',
+  usage: GPUTextureUsage.RENDER_ATTACHMENT,
+})
+```
+
+- 因为 Depth Buffer 为一种黑白纹理图片，所以我们可以使用 createTexture 函数来建立，详细的纹理图像建立会在之后的纹理示例中介绍。
+- size 这里为绘制画布的相应大小, format 因为是用于 depth buffer 所以设置为相应的 depth 格式, usage 则配置为 RENDER_ATTACHMENT
+
+```typescript
+ const renderPassDescriptor: GPURenderPassDescriptor = {
+       ...
+        depthStencilAttachment: {
+            view: depthTexture.createView(),
+            depthClearValue: 1.0,
+            depthLoadOp: 'clear',
+            depthStoreOp: 'store',
+        }
+      ...
+    };
+```
+
+在 renderPassDescriptor 我们需要配置上面的 depthTexture 到 depthStencilAttachment 属性中, depthClearValue depthLoadOp depthStoreOp 的设定原理和 colorAttachments 相同.
+Depth buffer 的数值范围为[0, 1]之间，所以我们将 depthClearValue 设置为范围中最大的数值 1.0，代表距离最远。
+
+### 4. 结束语
+
+现在我们已经可以通过上述对应于[hello triangle example](/blog/webgpu-hellotriangle)的代码更改来显示一个方块，这里没有介绍如何通过时间变化来更改模型的 model 矩阵和颜色，你也可以使用一个你喜欢的静态颜色和固定的矩阵来设置第二个 uniform 来更简单的绘制方块。
