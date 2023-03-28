@@ -8,12 +8,14 @@ summary: 'Learning the Rust and put some notes here for furture reference'
 
 ## 1. variables
 ```rust
+const CONST_VALUE: u32 = 10;
 let number: f32 = 10;
 ```
 
 - number is the variable name, f32 is type, 10 is value.
 - All variable default is immutable, for safty, concurrency and speed.
 - Use let `mut` number: f32 = 10; to change number to a mutable value that can be changed later. 
+- const defines const type, const type is immutable forever, and it must indicates the type.
 
 ## 2. function
 ```rust
@@ -30,3 +32,107 @@ fun do_stuff(a: f32, b: f32) -> f32 {
 - a:f32, b:f32 define the function arguments, ->f32 indicate the return type.
 - a*b is the return value, same as `return a*b;`, remember if don't use `return` keyward, don't use `;` in the end. 
 - variable only available in the scope, x is assigned inside {} scope, it will drop automatically when leaving the {}.
+
+## 3. shadowing
+```rust
+fn main() {
+    let x = 5;
+    let x = x + 6;
+    {
+        let x = x * 7; //x is 77
+    }
+    //x here is 11
+}
+```
+- declare a new variable with the same name as previous is first variable shadowed by the second. 
+- compile only sees the latest one until it out of scope
+
+## 4. Data Types
+### Integer Type:
+
+```u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize, 0xff, 0b1111_0000, b'A'```
+
+- u is unsigned value, i is signed, u/isize is the value depends on 32bit or 64bit system
+- type suffix is allowed like `20u8`
+- default integer type is i32
+- 0xff is hex, 0b is binary, b is byte
+- can use _ to make large number easy read like `1_000_000`
+
+### Float type
+
+`f32, f64`
+- default is f64
+
+### Bollean Type
+`bool`
+
+### Char Type
+`char`
+- char type is four bytes in size in rust
+
+### Tuple type
+```rust
+    let tup: (i32, f32) = (3, 8.8);
+    let first_elemnt = tup.0;
+    let (first, second) = tup;
+```
+- tuple element can be different type
+- access the tuple value by use .index like tup.0 above
+- (first, second) destructures the tup and get the value
+
+### Array Type
+```rust
+let array: [u32, 5] = [1,2,3,4,5];
+let first = array[0];
+let inital_array = [0; 5] // equal to [0, 0, 0, 0, 0]
+```
+- array must have same type and fixed length
+- [u32, 5], first one defines type, second is length
+- [0; 5] means inital array value to all 0 and array length is 5
+- use array_name[index] to access the array member
+
+## 5. Control Flow
+
+### if..else
+```rust
+if x<0 {5} else if x<6 {6} else {7}
+```
+- if condition doesn't need `()` after if like if(x<0) in rust
+- if can assign value like `let value = if x<0 {5}`, value is 5 here
+
+### loops :
+```rust
+let count  = 0;
+ 'first_loop': loop{
+    let value = loop {
+        if count == 2
+        {
+            break count;
+        }
+        count += 1;
+        if count == 3
+        {
+            break 'first_loop'
+        }
+    }
+    count += 1;
+ }
+```
+- `first_loop` is the defined name to distinguish different loops
+- `break count` can quit the loop and return the value of count
+- `break first_loop` can quit the loop named `first_loop`
+
+### while
+```rust
+while number !== 0 {
+    number -= 1
+}
+```
+
+### for
+```rust
+let array = [1,2,3,4,5]
+for element in array {
+    println!("the value is : {element}")
+}
+```

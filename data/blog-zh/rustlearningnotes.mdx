@@ -8,12 +8,14 @@ summary: '记录了学习Rust的一些核心知识要点方便未来查看'
 
 ## 1. 变量
 ```rust
+const CONST_VALUE: u32 = 10;
 let number: f32 = 10;
 ```
 
 - number是变量名, f32是类型, 10是赋予变量的值.
 - 所有的变量默认是不可变的, 就是说赋值后无法更改， 这是为了多线程的安全性和提供更快的读取速度.
-- 如果要更改变量, 可以使用 let `mut` number: f32 = 10; 增加'mut'关键字来表示此变量可以改变. 
+- 如果要更改变量, 可以使用 let `mut` number: f32 = 10; 增加'mut'关键字来表示此变量可以改变.
+- const定义const变量，const必须要定义类型，并且赋值后无法更改 
 
 ## 2. 函数
 ```rust
@@ -30,3 +32,107 @@ fun do_stuff(a: f32, b: f32) -> f32 {
 - a:f32, b:f32 是函数的参数, ->f32 为函数的返回值.
 - a*b 是为返回数值, 和 `return a*b;`有相同的作用, 不使用return 和 ; 只是为了更方便使用, 本质和使用return无任何区别, 需要注意的是如果不用return,也不能用;
 - 变量有自己的固定域， 通常包含在{}里, 如果离开{}范围后，变量会自动销毁无法继续使用. 比如这里x是在独立的{}中声名的,离开{}后x无法继续使用.
+
+## 3. 阴影
+```rust
+fn main() {
+    let x = 5;
+    let x = x + 6;
+    {
+        let x = x * 7; //x 为 77
+    }
+    //x 为 11
+}
+```
+- 声明前一个变量名同样名字的变量叫阴影覆盖
+- 编译器只在意最后一个变量直到变量离开自己的域
+
+## 4. 类型
+### 整数类型:
+
+```u8, u16, u32, u64, u128, usize, i8, i16, i32, i64, i128, isize, 0xff, 0b1111_0000, b'A'```
+
+- u是无符号整数, i是有符号整数, u/isize是类型基于系统，如32bit系统和64bit系统会返回不同的整数类型
+- 可以用`20u8`来指定20为u8类型
+- i32为默认整数类型
+- 0xff 是十六进制, 0b代表二进制, b代表字符
+- 可以使用 _ 来让大的整数更容易读， 比如 `1_000_000`
+
+### 浮点类型
+
+`f32, f64`
+- f64为默认类型
+
+### Bollean类型
+`bool`
+
+### Char类型
+`char`
+- char类型为4个字节
+
+### Tuple类型
+```rust
+    let tup: (i32, f32) = (3, 8.8);
+    let first_elemnt = tup.0;
+    let (first, second) = tup;
+```
+- tuple中的每个成员可以为不同的类型
+- 可以使用 .索引 来读取tuple中的成员，比如上述第一个成员使用tup.0读取
+- (first, second)将tuple函数中的成员分别赋值给first, second
+
+### 数组类型
+```rust
+let array: [u32, 5] = [1,2,3,4,5];
+let first = array[0];
+let inital_array = [0; 5] // 等于 [0, 0, 0, 0, 0]
+```
+- 数组中所有成员必须为相同类型，并且数组长度是固定不变的
+- [u32, 5], 第一个u32定义了数组的类型， 第二个5代表数组长度
+- [0; 5] 是将一个长度为5的数组所有成员初始化为0
+- 使用数组名[索引]来访问数组成员
+
+## 5. 控制流程
+
+### if..else
+```rust
+if x<0 {5} else if x<6 {6} else {7}
+```
+- 在rust中if后面不需要使用 `()` 如if(x<0)
+- 可以将if的结果给别的变量赋值，比如 `let value = if x<0 {5}`, 这里value的值为5
+
+### loops :
+```rust
+let count  = 0;
+ 'first_loop': loop{
+    let value = loop {
+        if count == 2
+        {
+            break count;
+        }
+        count += 1;
+        if count == 3
+        {
+            break 'first_loop'
+        }
+    }
+    count += 1;
+ }
+```
+- `first_loop` 是给与第一个loop的名字用于区别其他的loop
+- `break count` break用于结束loop， break后跟随count表示同时将count的数值返回
+- `break first_loop` 这里如果跟着我们提前给与的loop名字表示我们要结束这个名字的loop
+
+### while
+```rust
+while number !== 0 {
+    number -= 1
+}
+```
+
+### for
+```rust
+let array = [1,2,3,4,5]
+for element in array {
+    println!("the value is : {element}")
+}
+```
