@@ -155,3 +155,47 @@ for element in array {
     println!("the value is : {element}")
 }
 ```
+
+### 6. 所有权
+
+```rust
+fn main(){
+    let s1 = String::from("Owner");
+    let s2 = s1;
+    //这里s1已经失效，读取会错误， 因为s1已经将所有权传递给了s2
+    let x1 = 5;
+    let x2 = x1;
+    //这里x1和x2都仍然有效，因为x1在内存堆上，非常容易进行复制，而且i32这类基本的已知大小的类型已经采用了copy trait来实现内容的复制
+}
+```
+
+- Rust 使用所有权来管理内存。在同样的域中一个内存空前只允许有一个拥有者，当拥有者离开域，会通过调用 drop 函数来释放内存
+- 如果希望 s2 和 s1 拥有一样的内存数据，可以使用 `s2 = s1.clone()` 来复制 s1 的内存内容到 s2, copy trait 不允许在已采用 drop trait 的目标使用。
+
+```rust
+fn main(){
+    let s1 = String::from("Owner");
+    get_length(&s1);
+}
+
+fn get_length(s: &String) -> usize {
+    s.len()
+}
+```
+
+- 这里我没通过&符号来借用 s1 的所有权，当借用离开自己的域时，不会调用 drop 来释放内存，因为所有权仍然属于 s1
+- 在同一个域中只能借用一次`mute`可改变的所有权，但是允许借用多次不可改变的所有权，因为 rust 无法预防其他借用在读取同一个内存空间的时候会被其他的借用更改数据
+
+### 7. Slice
+
+```rust
+let s = String::from("Hello World");
+let hello = &s[0..5];
+
+let a = [0,1,2,3,4,5];
+let a1_2 = &a[1, 3];
+assert_eq!(a1_2, &[1,2]);
+```
+
+- slice 返回一个指向原数据位置的指针以及需要的长度
+- 以上如果改成 `&s[..5]` 将得到同样的结果, `s[..]`将会返回整个 "Hello World"

@@ -155,3 +155,47 @@ for element in array {
     println!("the value is : {element}")
 }
 ```
+
+### 6. Ownership
+
+```rust
+fn main(){
+    let s1 = String::from("Owner");
+    let s2 = s1;
+    //s1 is not available anymore because s1 is move ownership to s2 for the string
+    let x1 = 5;
+    let x2 = x1;
+    //here we can access both x1 and x2, because x1 is on stack, and it int32 applys copy trait to copy the value to x2
+}
+```
+
+- Rust use ownership to manage memory, there is only one owner for the value in rust, once the value move out of scope, it calls drop to free the memory
+- if you want to keep s2 and s1 above both available, use `s2 = s1.clone()` to copy the value, copy trait is not allowed for the value implement the Drop trait
+
+```rust
+fn main(){
+    let s1 = String::from("Owner");
+    get_length(&s1);
+}
+
+fn get_length(s: &String) -> usize {
+    s.len()
+}
+```
+
+- we use & to borrow the reference to the string and the ownership now still belong to s1, so when function returns, the s1 is not dropped
+- only one mutable browwer can exist during the same scope, but we allowed multiple immutable references.
+
+### 7. Slice
+
+```rust
+let s = String::from("Hello World");
+let hello = &s[0..5];
+
+let a = [0,1,2,3,4,5];
+let a1_2 = &a[1, 3];
+assert_eq!(a1_2, &[1,2]);
+```
+
+- slice return a reference with pointer and length to the original data
+- above `&s[..5]` give the same result, and `s[..]`returs "Hello World"
