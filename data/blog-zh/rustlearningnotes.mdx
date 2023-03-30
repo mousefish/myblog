@@ -199,3 +199,93 @@ assert_eq!(a1_2, &[1,2]);
 
 - slice 返回一个指向原数据位置的指针以及需要的长度
 - 以上如果改成 `&s[..5]` 将得到同样的结果, `s[..]`将会返回整个 "Hello World"
+
+### 8. 结构
+
+```rust
+#[derive(Debug)]
+struct Shape {
+   isRound : bool,
+   Box: i32
+}
+
+impl Shape{
+   fn new() -> Self{
+     Self{
+         isRound: false,
+         Box: 32,
+       }
+  }
+
+   fn some_function() {} // 用Shape::some_function来调用这个函数, 没有&self无法使用shape.some_function来调用
+   fn another_function(&self) {} // 第一个参数必须为&self来允许shape.another_function的方式调用函数
+}
+
+let s = Shape::new();
+```
+
+- #[derive(Debug)] 用于使用 `println!("{:?}", shape)` 或者 `println!("{:#?}", shape)` 来进行 shape 结构的打印调试
+- 也可以使用 `dbg!` 在不同的代码行中插入，比如 `dbg!(&shape)` 来打印 shape 进行调试
+
+### 9. Enum
+
+```rust
+enum TestObject {
+   Empty,
+   Square(u32, u32),
+   Round(f32),
+   Position {x: f32, y: f32}
+}
+
+impl TestObject {
+   fn display(&self) {}
+}
+
+fn get_result(testobj: TestObject) {
+    match testobj {
+        TestObject::Square(x,y) => println!("square width {}, height {}", x, y),
+        TestObject::Round(x) => println!("round radius {}", x),
+        TestObject::Position{x, y}=> println!("position is x: {} y: {}", x, y),
+        _ => println!("Empty"),
+    }
+}
+
+let shape = TestObject::Square(6, 5);
+let pos = TestObject::Position{x: 3.0, y: 3.0};
+
+get_result(shape);
+
+if let TestObject::Square(x, y) = shape {
+	println!("it match the result square width {} height {}", x, y);
+}
+else
+{
+	println!("it doesn't match")
+}
+```
+
+- Enum 可以使用不同形式的值在其中，比如 `Square(u32, u32)`
+- Enum 可以像结构一样加载函数
+- 使用`_`来表示是在上述条件都不满足的情况下，其余任何情况都调用以下方法，并且我们并不需要对应的值， 也可以使用 `other =>` 代替如果需要使用相应的值
+- 使用 `if let` 来判断是否和 enum 的某一个格式一致，并读取其中数值
+
+```rust
+enum Option<T> {
+  Some(T),
+  None,
+}
+let mut x: Option<i32> = None;
+x = Some(5);
+x.is_some(); //true
+x.is_none(); //false
+for i in x {
+ println!("{}", i); //显示 5
+}
+
+enum Result<T, E> {
+	Ok(T),
+    Err(E),
+}
+```
+
+- Rust 不允许使用 Null 这个值, 所以当必须要使用 Null 来表示某个空值时, 可以使用 Option 来代替 Null, Option 由于是 enum，所以可以为 None, 也可以为 Some(value)

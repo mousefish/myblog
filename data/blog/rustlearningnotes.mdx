@@ -199,3 +199,93 @@ assert_eq!(a1_2, &[1,2]);
 
 - slice return a reference with pointer and length to the original data
 - above `&s[..5]` give the same result, and `s[..]`returs "Hello World"
+
+### 8. Struct
+
+```rust
+#[derive(Debug)]
+struct Shape {
+   isRound : bool,
+   Box: i32
+}
+
+impl Shape{
+   fn new() -> Self{
+     Self{
+         isRound: false,
+         Box: 32,
+       }
+  }
+
+   fn some_function() {} // use Shape::some_function to access, shape instance can not access like shape.some_function
+   fn another_function(&self) {} // use self will allowed instance shape to use shape.another_function
+}
+
+let s = Shape::new();
+```
+
+- #[derive(Debug)] allowed use `println!("{:?}", shape)` or `println!("{:#?}", shape)` to print Shape structure
+- also can use `dbg!` in the line to output debug info like `dbg!(&shape)`
+
+### 9. Enum
+
+```rust
+enum TestObject {
+   Empty,
+   Square(u32, u32),
+   Round(f32),
+   Position {x: f32, y: f32}
+}
+
+impl TestObject {
+   fn display(&self) {}
+}
+
+fn get_result(testobj: TestObject) {
+    match testobj {
+        TestObject::Square(x,y) => println!("square width {}, height {}", x, y),
+        TestObject::Round(x) => println!("round radius {}", x),
+        TestObject::Position{x, y}=> println!("position is x: {} y: {}", x, y),
+        _ => println!("Empty"),
+    }
+}
+
+let shape = TestObject::Square(6, 5);
+let pos = TestObject::Position{x: 3.0, y: 3.0};
+
+get_result(shape);
+
+if let TestObject::Square(x, y) = shape {
+	println!("it match the result square width {} height {}", x, y);
+}
+else
+{
+	println!("it doesn't match")
+}
+```
+
+- Enum can have values in it's element like `Square(u32, u32)`
+- Enum can implement function to it
+- use `_` to match all other case if don't need the value, otherwise can use `other =>` instead
+- use `if let` to compare if the same pattern of the enum and get the value of enum
+
+```rust
+enum Option<T> {
+  Some(T),
+  None,
+}
+let mut x: Option<i32> = None;
+x = Some(5);
+x.is_some(); //true
+x.is_none(); //false
+for i in x {
+ println!("{}", i); //print 5
+}
+
+enum Result<T, E> {
+	Ok(T),
+    Err(E),
+}
+```
+
+- Rust doesn't allowed null value, so if a value need to be null, can set to a Option type, Option can be None, value can be Some(value)
