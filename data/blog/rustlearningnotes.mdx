@@ -289,3 +289,42 @@ enum Result<T, E> {
 ```
 
 - Rust doesn't allowed null value, so if a value need to be null, can set to a Option type, Option can be None, value can be Some(value)
+
+### 10. Module and Path
+
+```
+--market
+    |___fruit
+    |     |____apple
+    |___meat
+          |____pork
+          |____chicken
+          |____beef
+                |___lean
+```
+
+For above structure, market consider as project we created。 so market is the root, we can use crate to represent root. fruit, meat, apple, pork...etc are just different modules under the project.
+
+- if we are in market, to access apple, we can use absolute path which is `crate::fruit::apple`, or relative path `fruit::apple`
+- if we are in chicken, to access pork, we can use absolute path like `crate::meat::pork` or relative path `super::pork`, super means parent of current path
+- there is no difference between absolute path or relative path, it depends on the project needs. Most time it suggest to use absolute path
+- use `use` key word to import the module you need once like `use meat::beef` , then you can use `beef::lean` to access in the same content without call `meat::beef::lean` everywhere
+- you can group import module by use `use meat::{pork, chicken, beef}`
+- `use meat::*` allows you import everything under meat
+
+```
+two ways to build this structure in file system:
+src/main.rs
+src/fruit.rs
+src/meat.rs
+src/fruit/apple.rs
+src/meat/pork.rs
+
+or
+
+src/main.rs
+src/fruit/mod.rs
+src/meat/mod.rs
+src/fruit/apple/mod.rs
+src/meat/pork/mod.rs
+```

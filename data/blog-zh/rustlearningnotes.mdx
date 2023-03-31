@@ -289,3 +289,42 @@ enum Result<T, E> {
 ```
 
 - Rust 不允许使用 Null 这个值, 所以当必须要使用 Null 来表示某个空值时, 可以使用 Option 来代替 Null, Option 由于是 enum，所以可以为 None, 也可以为 Some(value)
+
+### 10. 模块和路径
+
+```
+--market
+    |___fruit
+    |     |____apple
+    |___meat
+          |____pork
+          |____chicken
+          |____beef
+                |___lean
+```
+
+上述结构中，market 代表我们的项目名，是我们的根目录，我们通常使用 crate 来代表根目录，fruit,meat,apple,pork..这些则代表不同的模块
+
+- 如果我们现在在 market 中, 如果需要达到 apple, 我们可以使用绝对路径 `crate::fruit::apple`, 或者相对路径 `fruit::apple`到达
+- 如果我们现在在 chicken 区域中, 如果要到 pork 区, 可以使用绝对路径 `crate::meat::pork` 或者相对路径 `super::pork`到达, super 关键字的意思是上一级目录地址
+- 使用绝对路径还是用相对路径取决于不同的项目需求，并没有任何不同，通常情况下一般建议使用绝对路径
+- 只需使用 `use` 关键字来加载模块一次，比如 `use meat::beef`，相同区域中只需要使用 `beef::lean` 来到达 lean,不需要每次都使用 `meat::beef::lean`
+- 可以使用 `use meat::{pork, chicken, beef}` 来同时加载相同区域中的不同模块
+- 使用`use meat::*` 加载所有 meat 区域中的模块
+
+```
+两种方式通过建立新文件来实现上述结构:
+src/main.rs
+src/fruit.rs
+src/meat.rs
+src/fruit/apple.rs
+src/meat/pork.rs
+
+或者
+
+src/main.rs
+src/fruit/mod.rs
+src/meat/mod.rs
+src/fruit/apple/mod.rs
+src/meat/pork/mod.rs
+```
