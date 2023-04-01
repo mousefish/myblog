@@ -156,7 +156,7 @@ for element in array {
 }
 ```
 
-### 6. Ownership
+## 6. Ownership
 
 ```rust
 fn main(){
@@ -186,7 +186,7 @@ fn get_length(s: &String) -> usize {
 - we use & to borrow the reference to the string and the ownership now still belong to s1, so when function returns, the s1 is not dropped
 - only one mutable browwer can exist during the same scope, but we allowed multiple immutable references.
 
-### 7. Slice
+## 7. Slice
 
 ```rust
 let s = String::from("Hello World");
@@ -200,7 +200,7 @@ assert_eq!(a1_2, &[1,2]);
 - slice return a reference with pointer and length to the original data
 - above `&s[..5]` give the same result, and `s[..]`returs "Hello World"
 
-### 8. Struct
+## 8. Struct
 
 ```rust
 #[derive(Debug)]
@@ -227,7 +227,7 @@ let s = Shape::new();
 - #[derive(Debug)] allowed use `println!("{:?}", shape)` or `println!("{:#?}", shape)` to print Shape structure
 - also can use `dbg!` in the line to output debug info like `dbg!(&shape)`
 
-### 9. Enum
+## 9. Enum
 
 ```rust
 enum TestObject {
@@ -290,7 +290,7 @@ enum Result<T, E> {
 
 - Rust doesn't allowed null value, so if a value need to be null, can set to a Option type, Option can be None, value can be Some(value)
 
-### 10. Module and Path
+## 10. Module and Path
 
 ```
 --market
@@ -328,3 +328,78 @@ src/meat/mod.rs
 src/fruit/apple/mod.rs
 src/meat/pork/mod.rs
 ```
+
+### 11.Collections
+
+### Vector
+
+```rust
+//create new vector
+let mut v1:Vec<i32> = Vec::new();
+//another way to create new vector by using macro
+let v2 = vec![1,2,3];
+//insert vector
+v.push(2);
+//get value form vector by using index
+let value& i32 = &v1[0];
+//get value from vector by using get function
+let value: Option<&i32> = v1.get(2)
+//iterate vector
+for i in &v1 { println!{"{i}"};}
+//use Enum to store different type in vector
+enum Shape{
+    Round(f32),
+    Box(u32,u32),
+}
+let shape = vec![Shape::Round(3.14), Shape::Box(3,4)];
+```
+
+- use get or index to retrive data from vector depends if the program need to panic when index out of bounds, like `v1[1]` will panic because no value in index 1, but `v1.get(1)` will return Option None that you can do something for it.
+
+### String
+
+```rust
+//create empty string
+let mut s = String::new();
+//create string from value by using from
+let s1 = String::from("string 1");
+//create string from value by using to_string
+let s2 = "string 2".to_string();
+//append value to string
+s.push_str("append s");
+//append char to string
+s.push('s');
+//add strings by using +
+let s3 = s1 + &s2; //output: string 1 string 2
+//add strings by using format!
+format!("{s2}-{s3}"); //output: string 2 - string 1 string 2
+//slice string
+let ss = &s2[0..6];
+//iterating string by char
+for c in s3.chars()
+//iterating string by byte
+for b in s3.bytes()
+```
+
+- when use add, s1 is move to s3, s1 will not validate after moving, but s2 is borrowed, so you still can use s2.
+- format borrows both s2 and s3, so both value is valid after
+- string is not allowed to use index to access, because some word may take more then one byte to store, like "你好" will use 4 bytes, index 0 will not return the first full character. By using slice you will take your own risk to get the correct character
+
+### HashMap
+
+```rust
+//create hashmap
+let mut count = HashMap::new();
+//add hashmap
+let cat = String::from("cat");
+count.insert(cat, 3);
+//read value
+count.get("cat").copied().unwrap_or(0);
+//iterate hashmap
+for (key, value) in &count
+//only update value when key is not exist, and it will return a pointer to value 5
+count.entry(String::from("cat")).or_insert(5);
+```
+
+- cat is not valid after insert into HashMap because cat ownership is move to the count HashMap
+- HashMap use `SipHash` hash function, it is not the fastest but provide more security.
