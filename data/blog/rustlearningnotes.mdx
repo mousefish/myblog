@@ -329,7 +329,7 @@ src/fruit/apple/mod.rs
 src/meat/pork/mod.rs
 ```
 
-### 11.Collections
+## 11.Collections
 
 ### Vector
 
@@ -403,3 +403,138 @@ count.entry(String::from("cat")).or_insert(5);
 
 - cat is not valid after insert into HashMap because cat ownership is move to the count HashMap
 - HashMap use `SipHash` hash function, it is not the fastest but provide more security.
+
+## 12. Generic Types
+
+```rust
+//function generic type parameters
+add(a: T, b: T)->T{
+    a+b
+}
+let result = add(3, 4);
+let result = add(0.3, 0.4);
+
+//generic type in struct definitions
+struct Point<T> {
+    x: T,
+    y: T,
+}
+
+//generic type in method
+impl<T> Point<T> {
+    fn x(&self) -> &T {
+        &self.x
+    }
+
+//generic type in enum
+enum Option(T) {
+    Some(T),
+    None,
+}
+}
+```
+
+- generic type doesn't affect performance, because during the compile time each generic type will be replace with specific definitions for each instance.
+
+## 13. Trait
+
+```rust
+//create a trait
+trait DisplayShape {
+  fn display (&self)；
+  fn defaultDisplay (&self) {
+   println!("defined here don't need to be implment again")
+ }
+}
+
+//implement trait
+impl DisplayShape for Shape {
+  // here must implement all the function that not defined in the DisplayShape trait
+  fn display (&self) {
+  println!{ {"{}"}, self.Box}
+ }
+}
+
+//impl makes the compiler determine type during the compile period
+//it will create different version of the function based on how many trait been implemented.
+fn display_shape(val: imp DisplayShape) {
+   val.display();
+}
+
+// dynamic decission of which function to call at runtime, so compile file is smaller
+fn display_shape(val: &dyn DisplayShape) {
+   val.display();
+}
+
+//using where case for trait pass to function to make it clear reading
+fn display_shape<T, U>(t: &T, u: &U)->i32
+where T: Display + Clone,
+      U: Clone + Debug,
+```
+
+- not field allowed in trait defining
+- function in trait can have default implementation
+- `+` in above T, U means tha item must implement both trait
+
+## 14. Lifetime
+
+```rust
+//reference with lifetime
+&'a i32
+//mutable reference with lifetime
+&'a mut i32
+
+//life time in function
+fn display_shape<'a>(val: &'a str, val: &'a str) -> &'a str
+
+//life time will use smaller life time of the two arguments
+//following will show error during compile
+let string1 = String::from("this is a outer box");
+let result;
+{
+let string2 = String::from("this is a inner box");
+result = display_shape(string1.as_str(), string2.as_str());
+}
+println!("result is {}", result);
+
+//life time in struct
+struct Shape<'a> {
+    name: &'a str
+}
+
+//life time in method definitions
+impl<'a> Shape<'a> {
+    fn box(&self) -> (f32,f32）{
+        (3.1,3.1)
+    }
+}
+
+//life time with generic type, trait
+fn shape_area<'a, T>(s: &'a shape, show: T) -> f32
+where T: Display
+```
+
+- Life time is to make sure the borrowing reference will always valid.
+- Rust has 3 rules allows don't always need put lifetime for the parameters to make it simple. Check the rust book.
+
+## 15. Error Handling
+
+```rust
+//unrecoverable error
+panic!("crash unrecoverable");
+
+//recoverable error
+enum Result<T, E>{
+    Ok(T),
+    Err(E)
+}
+
+//for recoverable error, unwrap will give a panic if error and return result if not panic
+File::open("file.txt").unwrap();
+
+//expect will set the panic message
+File::open("file.txt").expect("error: file can not open");
+
+//? mark to return the error, if success will continue
+File::open("file.txt")?; // equal to return Err(e); when file not open
+```
