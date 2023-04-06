@@ -537,3 +537,42 @@ File::open("file.txt").expect("error: file can not open");
 //? 问好会在错误发生时返回完整的错误, 成功则将继续
 File::open("file.txt")?; // 等于当文件无法打开时return Err(e);
 ```
+
+## 16. Closure （闭包）
+
+```rust
+fn add(x: i32, y: i32) -> i32 {x + y}
+//上面的函数和以下closure相同
+let add = |x,y| x+y;
+//closure只能接受一种类型，当接受第一种类型后再接受另一种类型会报错
+//以下先赋值整数后赋值浮点将会报错
+let i = add(3, 4);
+let f = add(3.0, 4.0)
+
+//通常在closure中会以借用的形式调用参数
+//如果需要转移所有权，可以在前面加上move关键词，如以下list将所有权转移给closre
+move || println!("move list here {:?}", list);
+```
+
+## 17. Iterator （遍历）
+
+```rust
+let v = vec![1,2,3];
+let v_iter = v.iter();
+//通过iterator进行循环
+for val in v_iter { println!("got {}", val);}
+
+//next
+let mut v1_iter = v.iter();
+v1_iter.next() // 结果为Some(&1)
+
+//sum
+let v2_iter = v.iter();
+let total = v2_iter.sum(); //result is 1+2+3 = 6, 在sum后v2_iter将不可再使用，因为所有权以发生转移
+
+//map
+let v1:Vec<_> = v.iter().map(|x|x+1).collect(); // 结果为 vec![2,3,4]
+
+//filter
+let v2:Vec<_> = v.iter().filter(|x| x>1).collect(); //结果为 vec![2,3]
+```

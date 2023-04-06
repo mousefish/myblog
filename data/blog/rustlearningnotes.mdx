@@ -538,3 +538,42 @@ File::open("file.txt").expect("error: file can not open");
 //? mark to return the error, if success will continue
 File::open("file.txt")?; // equal to return Err(e); when file not open
 ```
+
+## 16. Closure
+
+```rust
+fn add(x: i32, y: i32) -> i32 {x + y}
+//above function is equal to
+let add = |x,y| x+y;
+//closure can only accept one type
+//below will give error
+let i = add(3, 4);
+let f = add(3.0, 4.0)
+
+//normally in closure, it will borrow the reference
+//if want to use move keyword
+move || println!("move list here {:?}", list);
+```
+
+## 17. Iterator
+
+```rust
+let v = vec![1,2,3];
+let v_iter = v.iter();
+//loop the iterator
+for val in v_iter { println!("got {}", val);}
+
+//next
+let mut v1_iter = v.iter();
+v1_iter.next() // result is Some(&1)
+
+//sum
+let v2_iter = v.iter();
+let total = v2_iter.sum(); //result is 1+2+3 = 6, after sum v2_iter is not valid anymore.
+
+//map
+let v1:Vec<_> = v.iter().map(|x|x+1).collect(); // result is vec![2,3,4]
+
+//filter
+let v2:Vec<_> = v.iter().filter(|x| x>1).collect(); //result is vec![2,3]
+```
