@@ -576,3 +576,70 @@ let v1:Vec<_> = v.iter().map(|x|x+1).collect(); // 结果为 vec![2,3,4]
 //filter
 let v2:Vec<_> = v.iter().filter(|x| x>1).collect(); //结果为 vec![2,3]
 ```
+
+## 18. 智能指针
+
+### 1. Box<T>
+
+```rust
+//使用box来将数据存在堆中
+let b = Box::new(5);
+println!("value is {}",b); //输出结果value is 5
+
+struct Round {
+    radius: f32,
+}
+struct Shape {
+    pub round: Box<Round>
+}
+let r = Box::new(Round{radius: 3.14});
+let shape = Shape{round: r,};
+println!{"value is {:?}", shape.round.radius}; //输出结果 valu is 3.14
+```
+
+### 2. Rc<T>
+
+```rust
+use std::rc::Rc;
+struct Round {
+    radius: f32,
+}
+struct Shape {
+    pub round: Rc<Round>
+}
+struct Area {
+    pub round: Rc<Round>
+}
+//新建 Rc<T> 和Box类似
+let r = Rc::new(Round{radius: 3.14});
+//使用Rc::clone(&r)来共享所有权，这个方法内部会将strong_count + 1
+let shape = Shape{round: Rc::clone(&r)};
+let area = Area{round: Rc::clone(&r)};
+println!("shape radius is {:?}", shape.round.radius);
+println!("area radius is {:?}", area.round.radius);
+```
+
+- Rc 实现了一个所有权共享给多个数据使用。Rc 的完整意思是引用计数，就像他的名字，每当增多一个共享所有权时，它的内部计数会增加 1，当使用这个引用的数据不再有效后，内部计数将减 1， 当内部计数归 0 时，将释放内存。
+- Rc 只允许在单线程中使用
+- Rc 只允许不可更改数据内容的借用
+
+### 3. RefCell<T>
+
+```rust
+//以下的两段程序将会发生错误
+let m = Vec::new();
+m.push(1); // 这里的错误时候因为m定义为不可更改的数据，当我们要push一个数据到不可更改的变量中企图改变它时，程序将报错。
+//之前的方法是可以把m改成mut m来让其内容可更改，但是这里我们也可以使用RefCell来实现同样目的， 唯一不同的是RefCell的更改时发生在程序运行时，而通过mut关键词更改则是发生在程序编译时
+let m = RefCell::new(Vec::new());
+m.borrow_mut().push(1);
+println!("m first value is {}", m.borrow()[0]); //输出为 m first value is 1
+```
+
+- RefCell 和 Rc 一样只允许在单线程环境中使用
+
+### Summary
+
+- `Rc<T>` 将单个数据实现多个所有权变成可能; `Box<T>` 和 `RefCell<T>` 只允许同时只有一个所有权;
+- `Box<T>` 允许可更改数据和不可更改所有权借用，检查将在编译时进行； `Rc<T>` 只允许不可更改的所有权借用， 检查同样在编译时进行 `RefCell<T>` 允许可更改数据和不可更改所有权借用，检查将在程序运行时进行
+- `RefCell<T>` 可以更改在 `RefCell<T>`中的数据 `RefCell<T>` 并且不需要将其设为可更改状态。
+- 我们可以通过组合 Rc 和 RefCell `Rc::new(RefCell::new)` 来实现多个所有权并且可更改其内容。

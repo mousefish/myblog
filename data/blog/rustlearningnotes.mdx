@@ -577,3 +577,71 @@ let v1:Vec<_> = v.iter().map(|x|x+1).collect(); // result is vec![2,3,4]
 //filter
 let v2:Vec<_> = v.iter().filter(|x| x>1).collect(); //result is vec![2,3]
 ```
+
+## 18. Smart Pointers
+
+### 1. Box<T>
+
+```rust
+//using box to store value in the heap
+let b = Box::new(5);
+println!("value is {}",b); //print out value is 5
+
+struct Round {
+    radius: f32,
+}
+struct Shape {
+    pub round: Box<Round>
+}
+let r = Box::new(Round{radius: 3.14});
+let shape = Shape{round: r,};
+println!{"value is {:?}", shape.round.radius}; //print out valu is 3.14
+```
+
+### 2. Rc<T>
+
+```rust
+use std::rc::Rc;
+struct Round {
+    radius: f32,
+}
+struct Shape {
+    pub round: Rc<Round>
+}
+struct Area {
+    pub round: Rc<Round>
+}
+//create Rc<T>
+let r = Rc::new(Round{radius: 3.14});
+//using Rc::clone(&r) to pass shared value, this will lead to strong_count + 1
+let shape = Shape{round: Rc::clone(&r)};
+let area = Area{round: Rc::clone(&r)};
+println!("shape radius is {:?}", shape.round.radius);
+println!("area radius is {:?}", area.round.radius);
+```
+
+- Rc allowed multiple ownership for the same value. Rc stands for Reference Count which means each one reference ownership will add one more count, when each value out of scope, the count will reduce by 1, once count is 0, the memory will be freed.
+- Rc is only allowed in single thread
+- Rc only allowed immutable borrows
+
+### 3. RefCell<T>
+
+```rust
+//following imutable function will throw error
+let m = Vec::new();
+m.push(1); // error here becaues m is immutable, can't modify by pushing value into it
+//compile way to do is change m to mut m
+//also can use RefCell<T>
+let m = RefCell::new(Vec::new());
+m.borrow_mut().push(1);
+println!("m first value is {}", m.borrow()[0]); //output m first value is 1
+```
+
+- RefCell only allowed using in single thread like Rc
+
+### Summary
+
+- `Rc<T>` enables multiple owners of same data; `Box<T>` and `RefCell<T>` only allowed single owner;
+- `Box<T>` allows immutable or mutable borrows checked at compile time; `Rc<T>` allows only immutable borrows checkd at compile time; `RefCell<T>` allows immutable or mutable borrows checked at runtime
+- `RefCell<T>` can mutate the value inside the `RefCell<T>` even `RefCell<T>` is immutabl.
+- We can combine `Rc::new(RefCell::new)` to do muti ownership with mutable value inside.
