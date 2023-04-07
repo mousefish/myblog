@@ -580,7 +580,7 @@ let v2:Vec<_> = v.iter().filter(|x| x>1).collect(); //result is vec![2,3]
 
 ## 18. Smart Pointers
 
-### 1. Box<T>
+### 1. Box
 
 ```rust
 //using box to store value in the heap
@@ -598,7 +598,7 @@ let shape = Shape{round: r,};
 println!{"value is {:?}", shape.round.radius}; //print out valu is 3.14
 ```
 
-### 2. Rc<T>
+### 2. Rc
 
 ```rust
 use std::rc::Rc;
@@ -624,7 +624,7 @@ println!("area radius is {:?}", area.round.radius);
 - Rc is only allowed in single thread
 - Rc only allowed immutable borrows
 
-### 3. RefCell<T>
+### 3. RefCell
 
 ```rust
 //following imutable function will throw error

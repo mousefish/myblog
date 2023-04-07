@@ -579,7 +579,7 @@ let v2:Vec<_> = v.iter().filter(|x| x>1).collect(); //结果为 vec![2,3]
 
 ## 18. 智能指针
 
-### 1. Box<T>
+### 1. Box
 
 ```rust
 //使用box来将数据存在堆中
@@ -597,7 +597,7 @@ let shape = Shape{round: r,};
 println!{"value is {:?}", shape.round.radius}; //输出结果 valu is 3.14
 ```
 
-### 2. Rc<T>
+### 2. Rc
 
 ```rust
 use std::rc::Rc;
@@ -623,7 +623,7 @@ println!("area radius is {:?}", area.round.radius);
 - Rc 只允许在单线程中使用
 - Rc 只允许不可更改数据内容的借用
 
-### 3. RefCell<T>
+### 3. RefCell
 
 ```rust
 //以下的两段程序将会发生错误
