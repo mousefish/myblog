@@ -645,3 +645,96 @@ println!("m first value is {}", m.borrow()[0]); //output m first value is 1
 - `Box<T>` allows immutable or mutable borrows checked at compile time; `Rc<T>` allows only immutable borrows checkd at compile time; `RefCell<T>` allows immutable or mutable borrows checked at runtime
 - `RefCell<T>` can mutate the value inside the `RefCell<T>` even `RefCell<T>` is immutabl.
 - We can combine `Rc::new(RefCell::new)` to do muti ownership with mutable value inside.
+
+## 19. Concurrency
+
+```rust
+//create a new thread
+use std::tread
+let t1 = thread::spawn(||{
+    for i in 1..100 {
+        println!("I'm in another thread")
+    }
+});
+
+//wait thread to finish
+t1.join().unwrap();
+
+//if want to use value in main thread, one way is move the value into thread
+let v = vec![1,2,3];
+let t2 = thread::spawn(move||{
+    println!("vector move in thread {:?}", v);
+});
+```
+
+### Thread share information by using message system
+
+```rust
+//create a message chanenel
+use std::sync::mpsc;
+
+let (tx, rx) = mpsc::channel();
+//can clone tx for another thread
+let tx1 = tx.clone();
+//comuncation
+ let t1 = thread::spawn(move || {
+    let val = String::from("hi");
+    tx.send(val).unwrap();
+ })
+
+ let received = rx.recv().unwrap(); //recevied hi
+ t1.join().unwrap();
+
+ thread::spawn(move || {
+    let vals = vec![1, 2, 3];
+    for val in vals {
+        tx.send(val).unwrap();
+    }
+ });
+// rx here didn't call recv function, use iter instead
+ for received in rx {
+    println!("got : {}", received);
+ }
+```
+
+- mpsc stands for multiple producer, single consumer, that means multiple sending but only one receving end
+- tx, rx stands for transmitter and receiver.
+- tx needs to move to thread, so thread own it to send the message
+- recv and send function both return `Result<T, E>` type, if receiver is droped or send closed, will return error.
+
+### Thread share information by using shared data
+
+```rust
+//create mutex to protect shared data, only one thread can using the data
+use std::sync::Mutex;
+use std::thread;
+
+let m = Mutex::new(5);
+
+//read the mutex data
+let mut num = m.lock().unwrap();
+*num = 6; //number 5 become 6 here now.
+
+//share mutex with more threads by using Arc
+//Arc is similar to Rc but can be used in muti thread
+use std::sync::Arc
+
+let counter = Arc::new(Mutex::new(0));
+
+let counter1 = Arc::clone(&counter);
+let counter2 = Arc::clone(&counter);
+
+let t1 = thread::spawn(move || {
+    let mut num = counter1.lock().unwrap();
+    *num += 1;
+});
+
+t1.join().unwrap();
+
+let t2 = thread::spawn(move || {
+    let mut num = counter2.lock().unwrap();
+    *num += 1;
+});
+t2.join().unwrap();
+//num here is 2 now
+```

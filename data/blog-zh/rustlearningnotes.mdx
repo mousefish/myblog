@@ -643,3 +643,96 @@ println!("m first value is {}", m.borrow()[0]); //输出为 m first value is 1
 - `Box<T>` 允许可更改数据和不可更改所有权借用，检查将在编译时进行； `Rc<T>` 只允许不可更改的所有权借用， 检查同样在编译时进行 `RefCell<T>` 允许可更改数据和不可更改所有权借用，检查将在程序运行时进行
 - `RefCell<T>` 可以更改在 `RefCell<T>`中的数据 `RefCell<T>` 并且不需要将其设为可更改状态。
 - 我们可以通过组合 Rc 和 RefCell `Rc::new(RefCell::new)` 来实现多个所有权并且可更改其内容。
+
+## 19. 多线程
+
+```rust
+//建立一个新的线程
+use std::tread
+let t1 = thread::spawn(||{
+    for i in 1..100 {
+        println!("I'm in another thread")
+    }
+});
+
+//等待线程完成再继续执行
+t1.join().unwrap();
+
+//如果需要使用主线程中的数据，可以使用move关键词将主线程中的所有权移交给新的线程
+let v = vec![1,2,3];
+let t2 = thread::spawn(move||{
+    println!("vector move in thread {:?}", v);
+});
+```
+
+### 线程通过消息模式来进行信息传递
+
+```rust
+//建立一个消息通道
+use std::sync::mpsc;
+
+let (tx, rx) = mpsc::channel();
+//可以复制tx来给另一个线程使用
+let tx1 = tx.clone();
+//新线程传递消息通过tx.send
+ let t1 = thread::spawn(move || {
+    let val = String::from("hi");
+    tx.send(val).unwrap();
+ })
+
+ let received = rx.recv().unwrap(); //主线程说到hi
+ t1.join().unwrap();
+
+ thread::spawn(move || {
+    let vals = vec![1, 2, 3];
+    for val in vals {
+        tx.send(val).unwrap();
+    }
+ });
+// rx这里没有使用recv，因为收到多条消息，使用iter代替
+ for received in rx {
+    println!("got : {}", received);
+ }
+```
+
+- mpsc 意思为多个制造者一个消费者，说明在多线程中只允许一个接收者
+- tx, rx 为发送和接收
+- tx 需要把所有权交给新建的线程来发送消息
+- recv 和 send 函数都会返回 `Result<T, E>` 类型, 当接收者失效或者发送者不再发送消息时，将会发送错误
+
+### 线程通过访问相同的内存地址来共享信息
+
+```rust
+//建立 mutex 来保护一个数据，防止在同一时间内多个线程同时访问
+use std::sync::Mutex;
+use std::thread;
+
+let m = Mutex::new(5);
+
+//读取mutex中保护的内容
+let mut num = m.lock().unwrap();
+*num = 6; // 5 这里变成了 6
+
+//通过Arc来将Mutex共享给多个线程使用
+//Arc和Rc的使用原理类似，只是Arc能在多线程下使用
+use std::sync::Arc
+
+let counter = Arc::new(Mutex::new(0));
+
+let counter1 = Arc::clone(&counter);
+let counter2 = Arc::clone(&counter);
+
+let t1 = thread::spawn(move || {
+    let mut num = counter1.lock().unwrap();
+    *num += 1;
+});
+
+t1.join().unwrap();
+
+let t2 = thread::spawn(move || {
+    let mut num = counter2.lock().unwrap();
+    *num += 1;
+});
+t2.join().unwrap();
+//num这里变成了2
+```
