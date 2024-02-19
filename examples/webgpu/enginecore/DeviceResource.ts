@@ -95,7 +95,7 @@ class DeviceResource {
 
   createDefaultDepthStencilConfig() {
     return {
-      depthWriteEnalbed: true,
+      depthWriteEnabled: true,
       depthCompare: 'less',
       format: 'depth24plus',
     }
