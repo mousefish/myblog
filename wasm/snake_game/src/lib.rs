@@ -26,17 +26,24 @@ struct Snake {
 }
 
 impl Snake {
-    fn new() -> Snake {
+    fn new(snake_head: usize) -> Snake {
         Snake {
-            body: vec![10],
+            body: vec![snake_head],
             direction: MoveDirection::LEFT,
         }
     }
 
-    fn reset(&mut self) {
+    fn set_direction(&mut self, width: usize) {
+        if self.body[0] < width * width / 2 {
+            self.direction = MoveDirection::Down;
+        } else if self.body[0] > width * width / 2 {
+            self.direction = MoveDirection::UP;
+        }
+    }
+
+    fn reset(&mut self, snake_head: usize) {
         self.body.clear();
-        self.body.push(10);
-        self.direction = MoveDirection::LEFT;
+        self.body.push(snake_head);
     }
 }
 
@@ -53,9 +60,9 @@ pub struct Scene {
 
 #[wasm_bindgen]
 impl Scene {
-    pub fn new(width: usize) -> Scene {
+    pub fn new(width: usize, snake_head: usize) -> Scene {
         let size = width * width;
-        let snake = Snake::new();
+        let snake = Snake::new(snake_head);
         let mut vec_holder = vec![];
         for i in 0..size {
             vec_holder.push(i);
@@ -106,10 +113,11 @@ impl Scene {
         self.game_state
     }
 
-    pub fn reset(&mut self) {
+    pub fn reset(&mut self, snake_head: usize) {
         self.point = 0;
         self.game_state = Some(GameState::PLAY);
-        self.snake.reset();
+        self.snake.reset(snake_head);
+        self.snake.set_direction(self.width);
         self.reward = Scene::create_reward(&self.snake.body, &self.vec_holder);
     }
 

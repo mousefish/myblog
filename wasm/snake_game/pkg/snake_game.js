@@ -145,10 +145,11 @@ export class Scene {
   }
   /**
    * @param {number} width
+   * @param {number} snake_head
    * @returns {Scene}
    */
-  static new(width) {
-    const ret = wasm.scene_new(width)
+  static new(width, snake_head) {
+    const ret = wasm.scene_new(width, snake_head)
     return Scene.__wrap(ret)
   }
   /**
@@ -209,9 +210,10 @@ export class Scene {
     return ret === 3 ? undefined : ret
   }
   /**
+   * @param {number} snake_head
    */
-  reset() {
-    wasm.scene_reset(this.__wbg_ptr)
+  reset(snake_head) {
+    wasm.scene_reset(this.__wbg_ptr, snake_head)
   }
   /**
    * @param {boolean} space_pressed

@@ -15,6 +15,7 @@ const SnakeGame: () => JSX.Element = () => {
   const [point, setPoint] = useState(0)
   const [scene, setScene] = useState<Scene>()
   const [stateText, setstateText] = useState<string>()
+  const [startButton, setStartButton] = useState<boolean>()
 
   const drawGrid = (ctx: CanvasRenderingContext2D) => {
     ctx.beginPath()
@@ -71,6 +72,7 @@ const SnakeGame: () => JSX.Element = () => {
       stop = true
     }
     if (stop) {
+      setStartButton(true)
       return
     }
     let fps = 5
@@ -94,11 +96,14 @@ const SnakeGame: () => JSX.Element = () => {
   }
 
   const play = () => {
+    stop = true
     clearTimeout(timeout)
-    stop = false
     setstateText('')
     if (scene != null) {
-      scene.reset()
+      stop = false
+      setStartButton(false)
+      const snake_index = Date.now() % (WORLD_WIDTH * WORLD_WIDTH)
+      scene.reset(snake_index)
       requestAnimationFrame(animate)
     }
   }
@@ -110,7 +115,7 @@ const SnakeGame: () => JSX.Element = () => {
     if (!wasExecutedRef.current) {
       ;(async () => {
         await init()
-        scene1 = Scene.new(WORLD_WIDTH)
+        scene1 = Scene.new(WORLD_WIDTH, SNAKE_INDEX)
         setScene(scene1)
         setSceneReady(true)
         drawGrid(ctx)
@@ -119,6 +124,7 @@ const SnakeGame: () => JSX.Element = () => {
       canvasRef.current.height = CELL_SIZE * WORLD_WIDTH
       canvasRef.current.width = CELL_SIZE * WORLD_WIDTH
       setContext(ctx)
+      setStartButton(true)
       document.addEventListener('keydown', (e) => {
         e.preventDefault()
         switch (e.code) {
@@ -178,7 +184,7 @@ const SnakeGame: () => JSX.Element = () => {
       </div>
       <canvas className="mb-3" id="examplecanvas" ref={canvasRef} width={200} height={200} />
       <div>
-        {sceneReady ? (
+        {sceneReady && startButton ? (
           <button
             type="button"
             onClick={play}

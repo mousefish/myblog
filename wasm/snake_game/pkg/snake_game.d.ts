@@ -30,9 +30,10 @@ export class Scene {
   free(): void
   /**
    * @param {number} width
+   * @param {number} snake_head
    * @returns {Scene}
    */
-  static new(width: number): Scene
+  static new(width: number, snake_head: number): Scene
   /**
    * @param {MoveDirection} direction
    */
@@ -62,8 +63,9 @@ export class Scene {
    */
   get_game_status(): GameState | undefined
   /**
+   * @param {number} snake_head
    */
-  reset(): void
+  reset(snake_head: number): void
   /**
    * @param {boolean} space_pressed
    */
@@ -75,7 +77,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 export interface InitOutput {
   readonly memory: WebAssembly.Memory
   readonly __wbg_scene_free: (a: number) => void
-  readonly scene_new: (a: number) => number
+  readonly scene_new: (a: number, b: number) => number
   readonly scene_change_direction: (a: number, b: number) => void
   readonly scene_snake_head: (a: number) => number
   readonly scene_snake_length: (a: number) => number
@@ -83,7 +85,7 @@ export interface InitOutput {
   readonly scene_get_reward: (a: number) => number
   readonly scene_get_point: (a: number) => number
   readonly scene_get_game_status: (a: number) => number
-  readonly scene_reset: (a: number) => void
+  readonly scene_reset: (a: number, b: number) => void
   readonly scene_update: (a: number, b: number) => void
   readonly hello_world: () => void
   readonly add: (a: number, b: number) => number
