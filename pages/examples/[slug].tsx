@@ -13,6 +13,7 @@ type Props = {
 export const examples = {
   HelloTriangle: dynamic(() => import('../../examples/webgpu/hellotriangle/main')),
   RotatingCube: dynamic(() => import('../../examples/webgpu/rotatingcube/main')),
+  SnakeGame: dynamic(() => import('../../examples/games/snakegame/main')),
 }
 
 function ExampleDemo({ slug }: Props): JSX.Element {
@@ -26,7 +27,7 @@ function ExampleDemo({ slug }: Props): JSX.Element {
           </h1>
         </div>
         <div className="container py-12">
-          <div className="-m-4 flex flex-wrap">
+          <div className="-m-4 flex flex-wrap justify-center">
             <ExampleDemo />
           </div>
         </div>
