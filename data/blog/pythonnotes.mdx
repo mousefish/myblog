@@ -1,0 +1,187 @@
+---
+title: 'Python Learning Key Note'
+date: '2024-02-16'
+tags: ['python']
+draft: false
+summary: 'Learning Python'
+---
+
+## 1.variable
+
+```python
+a = 2
+```
+
+It doesn't need decear variable type, and don't need ";" in the end
+boolean type will be `T`rue and `F`lase, first world is upper case.
+
+## 2.operation
+
+a / b result will always be a float type
+
+## 3.fstring
+
+```python
+a = 2
+b = 3.5
+s = f"result is {a} and {b}"
+```
+
+f-string, put f in front of string can combine different type of variable into one string, in python, you can not use "+" to append different type after string, such "result" + a will generate error.
+
+## 4.conditions
+
+```python
+if x > 10:
+  print("x bigger than 10")
+elif x == 10:
+  print("x is equal to 10")
+else:
+  print("x is smaller than 0")
+```
+
+if condition and else will folow with a ":"
+
+## 5. logical operator
+
+and or not, if x > 10 and x < 20, if not x == 10
+
+## 6. list
+
+```python
+color = ["red", "blue", "green"]
+color[0] //red
+color[-1] //green
+color.append("yellow"); //[red, blue, green, yellow]
+color.extend(["black", "white"]) //[red, blue, green, yellow, black, white]
+```
+
+## 7.loop
+
+```python
+for c in color:
+  print(c)
+
+for number in range(1, 3)
+ print(number)        //1, 2
+for number in range(1,5, 2)
+ print(number)  //1, 3, 5
+
+while number < 10:
+  print(number)
+  number += 1
+```
+
+## 8.function
+
+```python
+def myFunction():  //def for creating function and : in end of function name
+"""Document string myfunction""" //this three " will put into doucment for this function
+  print("Hello")
+  print("Here")
+def setColor(color):
+  print(f"your color is {color}")
+you can call function with setColor("red") or setColor(color = "red")
+def getColor:
+ return color
+```
+
+## 9.scope and indentation
+
+for above function, print hello and print here is in the same scope similar like
+
+```python
+def myFunction() {
+    print("Hello")
+    print("Here")
+}
+```
+
+if move print("Here") allign with def like
+
+```python
+def myFunction():
+  print("Hello")
+print("Here")
+```
+
+print is out side the myFunction scope and is not belong to part of the function. In python, indentation apply to everything scope including if else or for loop.
+
+```python
+num = 2
+def add():
+ num = 3
+add()
+print(number) //2
+```
+
+in python if you use the same variable name inside a function, it will be another different local variable, so this print result will still be 2
+
+if you want to access the global variable and change it
+
+```python
+def add():
+ global num //declare a global num that tell the function num is exist somewhere outside the function
+ num = 3
+```
+
+local variable only happens inside fun, if it's in a condition statement, the variable is also see outside scope
+
+```python
+num = 2
+if num > 1:
+  another_num = 2
+print(another_num)   // here you will see another num is 2 because inside if scope the value is available outside.
+```
+
+## 10.modules
+
+in file color.py
+
+```python
+mycolor = ["red","green", "blue"]
+```
+
+in file main.py
+
+```python
+import color
+print(color.mycolor)
+// or from color import mycolor
+print(mycolor)
+```
+
+## 11.dictionary
+
+```python
+students = {
+  "id1": "student1"
+  "id2": "student2"
+}
+print(students["id1"]) //student1
+students["id3"] = "student3" //add id3 and student3 to dictionary
+students["id2"] = ""  //edit dictionary id2 to empty
+empty_dictionary = {}
+for key in students //for loop will only access the key here
+ print(key) //"id1" "id2"
+ print(students[key]) // "student1" "student2"
+```
+
+## 12.tuple
+
+```python
+color = ("red", green, "blue")
+print(color[1]) //print green
+```
+
+## 13.class
+
+```python
+class Student:
+ def __init__(self, id):  //constuctor
+    self.id = id
+ def input_name(self, name): //method
+    self.name = name
+
+student = Student(1)
+```
