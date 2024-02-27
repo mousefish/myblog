@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react'
-import init, { hello_world, add, Scene, MoveDirection, GameState } from 'snake_game'
+import init, { Scene, MoveDirection, GameState } from 'snake_game'
 
 const CELL_SIZE = 20
 const WORLD_WIDTH = 20
