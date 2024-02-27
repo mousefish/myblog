@@ -1,0 +1,69 @@
+---
+title: 'Webassembly 学习笔记'
+date: '2022-10-16'
+tags: ['game', 'rust', 'webassembly']
+draft: false
+summary: 'Webassembly 学习笔记'
+---
+
+## 1. 如何在 webassembly 里建立一个类似 Typecript 中的 add(a: number, b: number) : number 函数并使用 typescript 中的 consol.log 函数
+
+Typescirpt 的内容:
+
+```typescript
+const consoleLog = {
+  console: {
+    log: () => {
+      console.log('typescirpt side log')
+    },
+  },
+}
+```
+
+Wasm add.wasm 的内容:
+
+```text
+(module
+  (import "console" "log" (func $consolelog))
+  (func $add (param $a i32) (param $b i32) (result i32)
+      call $consolelog // 这里会调用typescript中的console log函数
+      local.get $a  //这里将加载a参数中的内容到内存， local关键词是用来申明一个新的局部变量，我们可以用local $x i32来建立一个新的局部变量x， 或者使用local.set $x (i32.cnost 10) 来改变变量的值为10.
+      local.get $b
+      i32.add
+   )
+  (export "add" (func $add))  //导出add函数让typescript可以使用
+)
+```
+
+## 2. 如何共享内存空间
+
+### 在 webassembly 中建立一页内存可以供 Javascript/Typescript 使用
+
+```
+(module
+  (memory 1) //1 表示一个内存页，通常大概为64kb左右
+  (data (i32.const 0) "Hello World") //从索引0可是加载Hello World到上面的内存中
+  (memory $mem2)
+  (export "mem" (memory 0)) //到处从索引0开始的内存memory
+  (export "mem2"(memory $mem2)
+)
+```
+
+### 在 typescript 中建立一个内存让 webassembly 使用
+
+```typescript
+const memory = new WebAssembly.Memory({ initial: 1 }) //建立一个内存页的内存
+const importMemory = {
+  js: {
+    mem: memory,
+  },
+}
+```
+
+在 webassembly 中
+
+```
+(module
+(memory (import "js" "mem") 1)
+)
+```

@@ -1,0 +1,69 @@
+---
+title: 'Webassembly Learning Note'
+date: '2022-10-16'
+tags: ['game', 'rust', 'webassembly']
+draft: false
+summary: 'Learning webassembly'
+---
+
+## 1. how to write an typescript funciton add(a: number, b: number) : number function in webassembly and output the log from tavascript side
+
+Typescirpt side:
+
+```typescript
+const consoleLog = {
+  console: {
+    log: () => {
+      console.log('typescirpt side log')
+    },
+  },
+}
+```
+
+Wasm side add.wasm:
+
+```text
+(module
+  (import "console" "log" (func $consolelog))
+  (func $add (param $a i32) (param $b i32) (result i32)
+      call $consolelog // will output typescirpt side log
+      local.get $a  //local used to declare a new local variable, we can use local $x i32 to create a local variable x, or local.set $x (i32.cnost 10) to change the local variable to 10. in this example, it will load param $a onto the stack.
+      local.get $b
+      i32.add
+   )
+  (export "add" (func $add))  //export add function that can be used in javascript
+)
+```
+
+## 2. How to share memory data
+
+### create memory in webassembly and export in to JS
+
+```
+(module
+  (memory 1) //1 means 1 page of memory, page has around 64kb
+  (data (i32.const 0) "Hello World") //start from index 0 load the memory
+  (memory $mem2)
+  (export "mem" (memory 0)) //export te memory at index 0
+  (export "mem2"(memory $mem2)
+)
+```
+
+### create memory in JS and import into webassembly
+
+```typescript
+const memory = new WebAssembly.Memory({ initial: 1 }) //create 1 page of memory
+const importMemory = {
+  js: {
+    mem: memory,
+  },
+}
+```
+
+in webassembly
+
+```
+(module
+(memory (import "js" "mem") 1)
+)
+```
